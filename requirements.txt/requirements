@@ -1,0 +1,6 @@
+flask
+aiogram
+requests
+pandas
+ta
+gunicorn
