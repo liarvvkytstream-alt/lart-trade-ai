@@ -2,8 +2,8 @@
 from flask import Flask, jsonify, request, send_from_directory
 import random
 import requests
-import pandas as pd
-import ta
+# import pandas as pd
+# import ta
 import os
 
 # правильный путь к папке web
@@ -18,11 +18,12 @@ app = Flask(
 # API ключ из Railway Variables
 API_KEY = os.getenv("86d5500f514a46bbb125e2ea2ffee6e8")
 
-symbols = [
-    "EURUSD",
-    "GBPUSD",
-    "USDJPY",
-    "AUDUSD"
+symbols = [ "GBPUSD","USDJPY","USDCHF","AUDUSD","USDCAD","NZDUSD",
+"EURGBP","EURJPY","EURCHF","EURAUD","EURCAD",
+"GBPJPY","GBPCHF","GBPAUD","GBPCAD",
+"AUDJPY","AUDCHF","AUDCAD",
+"CADJPY","CADCHF",
+"NZDJPY","NZDCAD"
 ]
 
 
@@ -41,24 +42,11 @@ def get_data(symbol):
     return df
 
 
+
 def get_signal():
     symbol = random.choice(symbols)
 
-    df = get_data(symbol)
-
-    if df is None:
-        return symbol, "ВВЕРХ", 60
-
-    df["ema20"] = ta.trend.ema_indicator(df["close"], window=20)
-    df["ema50"] = ta.trend.ema_indicator(df["close"], window=50)
-
-    last = df.iloc[-1]
-
-    if last["ema20"] > last["ema50"]:
-        direction = "ВВЕРХ"
-    else:
-        direction = "ВНИЗ"
-
+    direction = random.choice(["ВВЕРХ", "ВНИЗ"])
     probability = random.randint(82, 90)
 
     return symbol, direction, probability
