@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)
 
-API_KEY = "86d5500f514a46bbb125e2ea2ffee6e8"
+API_KEY = os.getenv("86d5500f514a46bbb125e2ea2ffee6e8")
 
 
 symbols = [
