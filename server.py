@@ -82,10 +82,9 @@ def signal():
     })
 
 
-@app.route("/")
-def index():
 
-  from flask import send_from_directory
+
+from flask import send_from_directory
 
 @app.route("/")
 def index():
