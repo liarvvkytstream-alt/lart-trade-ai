@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body class="bg">
+
+<div class="card">
+
+<img src="logo.png" class="logo">
+
+<h2>
+
+AI анализ завершён
+
+</h2>
+
+<p id="signal">Получаем сигнал...</p>
+
+
+<a href="select.html" class="retry-btn">
+
+Анализировать заново
+
+</a>
+
+</div>
+
+<script>
+
+time = localStorage.getItem("time")
+
+fetch("/signal?timeframe=" + time)
+
+.then(res => res.json())
+
+.then(data => {
+
+document.getElementById("signal").innerHTML = `
+
+Пара: ${data.symbol}
+
+<br><br>
+
+Сигнал: ${data.direction}
+
+<br><br>
+
+Время: ${data.timeframe} минут
+
+<br><br>
+
+Вероятность: ${data.probability}%
+
+`
+
+})
+
+</script>
+
+</body>
+
+</html>

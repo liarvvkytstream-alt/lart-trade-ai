@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body class="bg">
+
+<div class="card">
+
+<img src="logo.png" class="logo">
+
+<h2>
+
+Выберите время сделки
+
+</h2>
+
+<div class="grid">
+
+<button onclick="choose(1)">1 минута</button>
+
+<button onclick="choose(3)">3 минуты</button>
+
+<button onclick="choose(5)">5 минут</button>
+
+<button onclick="choose(30)">30 минут</button>
+
+</div>
+
+</div>
+
+<script>
+
+function choose(time){
+
+localStorage.setItem("time",time)
+
+window.location="loading.html"
+
+}
+
+</script>
+
+</body>
+
+</html>
