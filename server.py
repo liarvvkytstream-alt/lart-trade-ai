@@ -1,25 +1,28 @@
-from flask import Flask, jsonify, request
+
+from flask import Flask, jsonify, request, send_from_directory
 import random
 import requests
 import pandas as pd
 import ta
 import os
 
-app = Flask(__name__)
+# правильный путь к папке web (для Railway и gunicorn)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+app = Flask(__name__, static_folder=os.path.join(BASE_DIR, "web"))
+
+# правильное получение API ключа из Railway Variables
 API_KEY = os.getenv("86d5500f514a46bbb125e2ea2ffee6e8")
 
-
 symbols = [
-"EURUSD",
-"GBPUSD",
-"USDJPY",
-"AUDUSD"
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD"
 ]
 
 
 def get_data(symbol):
-
     url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1min&outputsize=60&apikey={API_KEY}"
 
     r = requests.get(url).json()
@@ -37,15 +40,12 @@ def get_data(symbol):
 
 
 def get_signal():
-
     symbol = random.choice(symbols)
 
     df = get_data(symbol)
 
     if df is None:
-
         return symbol, "ВВЕРХ", 60
-
 
     df["ema20"] = ta.trend.ema_indicator(df["close"], window=20)
     df["ema50"] = ta.trend.ema_indicator(df["close"], window=50)
@@ -53,13 +53,9 @@ def get_signal():
     last = df.iloc[-1]
 
     if last["ema20"] > last["ema50"]:
-
         direction = "ВВЕРХ"
-
     else:
-
         direction = "ВНИЗ"
-
 
     probability = random.randint(82, 90)
 
@@ -68,27 +64,21 @@ def get_signal():
 
 @app.route("/signal")
 def signal():
-
     timeframe = request.args.get("timeframe")
 
     symbol, direction, probability = get_signal()
 
     return jsonify({
-
         "symbol": symbol,
         "direction": direction,
         "probability": probability,
         "timeframe": timeframe
-
     })
 
 
-from flask import send_from_directory
-
 @app.route("/")
 def index():
-    return send_from_directory("web", "index.html")
-
+    return send_from_directory(app.static_folder, "index.html")
 
 
 if __name__ == "__main__":
