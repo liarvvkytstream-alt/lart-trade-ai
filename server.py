@@ -3,8 +3,9 @@ import random
 import requests
 import pandas as pd
 import ta
+import os
 
-app = Flask(__name__, static_folder="web", static_url_path="")
+app = Flask(__name__)
 
 API_KEY = "86d5500f514a46bbb125e2ea2ffee6e8"
 
@@ -82,8 +83,6 @@ def signal():
     })
 
 
-
-
 from flask import send_from_directory
 
 @app.route("/")
@@ -91,7 +90,6 @@ def index():
     return send_from_directory("web", "index.html")
 
 
-import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
