@@ -6,12 +6,16 @@ import pandas as pd
 import ta
 import os
 
-# правильный путь к папке web (для Railway и gunicorn)
+# правильный путь к папке web
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-app = Flask(__name__, static_folder=os.path.join(BASE_DIR, "web"))
+app = Flask(
+    __name__,
+    static_folder=os.path.join(BASE_DIR, "web"),
+    static_url_path=""
+)
 
-# правильное получение API ключа из Railway Variables
+# API ключ из Railway Variables
 API_KEY = os.getenv("86d5500f514a46bbb125e2ea2ffee6e8")
 
 symbols = [
@@ -31,9 +35,7 @@ def get_data(symbol):
         return None
 
     df = pd.DataFrame(r["values"])
-
     df["close"] = df["close"].astype(float)
-
     df = df[::-1]
 
     return df
@@ -79,8 +81,3 @@ def signal():
 @app.route("/")
 def index():
     return send_from_directory(app.static_folder, "index.html")
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
