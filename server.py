@@ -85,10 +85,14 @@ def signal():
 @app.route("/")
 def index():
 
-    return app.send_static_file("index.html")
+  from flask import send_from_directory
+
+@app.route("/")
+def index():
+    return send_from_directory("web", "index.html")
 
 
-
+import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
