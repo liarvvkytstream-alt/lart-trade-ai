@@ -1,69 +1,195 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="ru">
 <head>
-
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LART — Сигнал</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --red: #ff0000; --red-dim: #8a0000; --gold: #c9a84c; --gold-light: #f0d080; }
 
-<link rel="stylesheet" href="style.css">
+  body {
+    background: #050000;
+    font-family: 'Rajdhani', sans-serif;
+    color: white;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; overflow: hidden;
+  }
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(120,0,0,0.25) 0%, transparent 70%), #050000;
+  }
+  .grid-lines {
+    position: fixed; inset: 0; z-index: 0;
+    background-image: linear-gradient(rgba(255,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,0,0.04) 1px, transparent 1px);
+    background-size: 40px 40px; animation: gridMove 20s linear infinite;
+  }
+  @keyframes gridMove { to { transform: translateY(40px); } }
 
+  .card {
+    position: relative; z-index: 1;
+    background: rgba(15,0,0,0.85);
+    border: 1px solid rgba(255,0,0,0.15);
+    border-radius: 24px;
+    padding: 36px 28px 32px;
+    width: 92%; max-width: 380px;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 80px rgba(255,0,0,0.12);
+    animation: cardIn 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .card::before, .card::after {
+    content: ''; position: absolute; width: 20px; height: 20px;
+    border-color: var(--red); border-style: solid;
+  }
+  .card::before { top:-1px; left:-1px; border-width:2px 0 0 2px; border-radius:24px 0 0 0; }
+  .card::after  { bottom:-1px; right:-1px; border-width:0 2px 2px 0; border-radius:0 0 24px 0; }
+  @keyframes cardIn { from{opacity:0;transform:translateY(24px) scale(0.97);} to{opacity:1;transform:none;} }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2);
+    border-radius: 20px; padding: 4px 14px;
+    font-family: 'Orbitron', monospace; font-size: 10px;
+    color: #00ff88; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .badge-dot { width:5px; height:5px; background:#00ff88; border-radius:50%; box-shadow:0 0 6px #00ff88; animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  .signal-box {
+    background: rgba(255,0,0,0.05);
+    border: 1px solid rgba(255,0,0,0.2);
+    border-radius: 18px;
+    padding: 24px 20px;
+    margin: 0 0 20px;
+    position: relative; overflow: hidden;
+  }
+  .signal-box::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,0,0,0.5), transparent);
+  }
+
+  .pair-label {
+    font-size: 11px; color: rgba(255,255,255,0.35);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;
+  }
+  .pair-value {
+    font-family: 'Orbitron', monospace; font-size: 26px; font-weight: 900;
+    background: linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 20px;
+  }
+
+  .signal-direction {
+    font-family: 'Orbitron', monospace; font-size: 32px; font-weight: 900;
+    letter-spacing: 2px; margin-bottom: 4px;
+  }
+  .signal-direction.up   { color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.5); }
+  .signal-direction.down { color: var(--red); text-shadow: 0 0 20px rgba(255,0,0,0.5); }
+
+  .arrow { font-size: 28px; display: block; margin-bottom: 16px; }
+
+  .stats-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px;
+  }
+  .stat {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 12px 8px;
+  }
+  .stat-val {
+    font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 700;
+    color: var(--red);
+  }
+  .stat-lbl {
+    font-size: 10px; color: rgba(255,255,255,0.3);
+    text-transform: uppercase; letter-spacing: 1px; margin-top: 3px;
+  }
+
+  /* Probability bar */
+  .prob-wrap { margin: 20px 0; }
+  .prob-header { display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1px; }
+  .prob-val { font-family:'Orbitron',monospace; color:var(--red); font-size:13px; }
+  .prob-track { height:6px; background:rgba(255,0,0,0.1); border-radius:6px; overflow:hidden; }
+  .prob-fill { height:100%; background:linear-gradient(90deg,var(--red-dim),var(--red)); box-shadow:0 0 8px var(--red); border-radius:6px; width:0%; transition:width 1.2s cubic-bezier(0.16,1,0.3,1); }
+
+  .retry-btn {
+    display: block; margin-top: 24px; padding: 18px;
+    background: linear-gradient(90deg, var(--red) 0%, #cc0000 50%, var(--red-dim) 100%);
+    color: white; border-radius: 14px; text-decoration: none;
+    font-family: 'Orbitron', monospace; font-weight: 700;
+    font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    box-shadow: 0 0 30px rgba(255,0,0,0.4);
+    transition: all 0.25s ease; position: relative; overflow: hidden;
+  }
+  .retry-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: translateX(-100%); transition: transform 0.5s ease;
+  }
+  .retry-btn:hover::before { transform: translateX(100%); }
+  .retry-btn:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(255,0,0,0.6); }
+</style>
 </head>
-
-<body class="bg">
-
+<body>
+<div class="bg-layer"></div>
+<div class="grid-lines"></div>
 <div class="card">
+  <div class="badge"><span class="badge-dot"></span>Анализ завершён</div>
 
-<img src="logo.png" class="logo">
+  <div class="signal-box">
+    <div class="pair-label">Торговая пара</div>
+    <div class="pair-value" id="pair">—</div>
 
-<h2>
+    <div class="signal-direction" id="direction">...</div>
+    <span class="arrow" id="arrow"></span>
 
-AI анализ завершён
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val" id="time">—</div>
+        <div class="stat-lbl">Таймфрейм</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="prob-num">—</div>
+        <div class="stat-lbl">Точность</div>
+      </div>
+    </div>
+  </div>
 
-</h2>
+  <div class="prob-wrap">
+    <div class="prob-header"><span>Вероятность</span><span class="prob-val" id="prob-label">0%</span></div>
+    <div class="prob-track"><div class="prob-fill" id="prob-bar"></div></div>
+  </div>
 
-<p id="signal">Получаем сигнал...</p>
-
-
-<a href="select.html" class="retry-btn">
-
-Анализировать заново
-
-</a>
-
+  <a href="select.html" class="retry-btn">↺ Новый анализ</a>
 </div>
 
 <script>
-
-time = localStorage.getItem("time")
+const time = localStorage.getItem("time");
 
 fetch("/signal?timeframe=" + time)
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("pair").textContent = data.symbol;
+    document.getElementById("time").textContent = data.timeframe + " мин";
+    document.getElementById("prob-num").textContent = data.probability + "%";
+    document.getElementById("prob-label").textContent = data.probability + "%";
 
-.then(res => res.json())
+    const isUp = data.direction.includes("ВВЕРХ");
+    const dirEl = document.getElementById("direction");
+    const arrowEl = document.getElementById("arrow");
 
-.then(data => {
+    dirEl.textContent = isUp ? "ВВЕРХ" : "ВНИЗ";
+    dirEl.className = "signal-direction " + (isUp ? "up" : "down");
+    arrowEl.textContent = isUp ? "▲" : "▼";
+    arrowEl.style.color = isUp ? "#00ff88" : "#ff0000";
 
-document.getElementById("signal").innerHTML = `
-
-Пара: ${data.symbol}
-
-<br><br>
-
-Сигнал: ${data.direction}
-
-<br><br>
-
-Время: ${data.timeframe} минут
-
-<br><br>
-
-Вероятность: ${data.probability}%
-
-`
-
-})
-
+    setTimeout(() => {
+      document.getElementById("prob-bar").style.width = data.probability + "%";
+    }, 300);
+  });
 </script>
-
 </body>
-
 </html>

@@ -1,52 +1,178 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="ru">
 <head>
-
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LART — Выбор таймфрейма</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #ff0000;
+    --red-dim: #8a0000;
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --bg: #050000;
+  }
+  body {
+    background: var(--bg);
+    font-family: 'Rajdhani', sans-serif;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(120,0,0,0.25) 0%, transparent 70%), #050000;
+  }
+  .grid-lines {
+    position: fixed; inset: 0; z-index: 0;
+    background-image: linear-gradient(rgba(255,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,0,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridMove 20s linear infinite;
+  }
+  @keyframes gridMove { to { transform: translateY(40px); } }
 
-<link rel="stylesheet" href="style.css">
+  .card {
+    position: relative; z-index: 1;
+    background: rgba(15,0,0,0.85);
+    border: 1px solid rgba(255,0,0,0.15);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 92%; max-width: 400px;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 80px rgba(255,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    animation: cardIn 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .card::before, .card::after {
+    content: ''; position: absolute;
+    width: 20px; height: 20px;
+    border-color: var(--red); border-style: solid;
+  }
+  .card::before { top:-1px; left:-1px; border-width: 2px 0 0 2px; border-radius: 24px 0 0 0; }
+  .card::after  { bottom:-1px; right:-1px; border-width: 0 2px 2px 0; border-radius: 0 0 24px 0; }
 
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .logo-wrap {
+    position: relative; width: 90px; height: 90px;
+    margin: 0 auto 24px;
+  }
+  .logo-ring {
+    position: absolute; inset: -7px; border-radius: 50%;
+    border: 1.5px solid rgba(255,0,0,0.3);
+    animation: spin 8s linear infinite;
+  }
+  .logo-ring::before {
+    content: ''; position: absolute; top: -2px; left: 50%;
+    width: 5px; height: 5px; background: var(--red);
+    border-radius: 50%; box-shadow: 0 0 8px var(--red);
+    transform: translateX(-50%);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .logo-glow {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,0,0,0.2) 0%, transparent 70%);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity:0.6; transform:scale(1); } 50% { opacity:1; transform:scale(1.1); } }
+  .logo { width:90px; height:90px; border-radius:50%; object-fit:cover; position:relative; z-index:1; filter:drop-shadow(0 0 10px rgba(255,0,0,0.6)); }
+
+  h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    background: linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 12px; color: rgba(255,255,255,0.35);
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .divider {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+  }
+  .divider-line { flex:1; height:1px; background: linear-gradient(90deg, transparent, rgba(255,0,0,0.3), transparent); }
+  .divider-diamond { width:5px; height:5px; background:var(--red); transform:rotate(45deg); box-shadow:0 0 6px var(--red); }
+
+  .grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+
+  .tf-btn {
+    position: relative; overflow: hidden;
+    padding: 20px 12px;
+    background: rgba(255,0,0,0.05);
+    border: 1px solid rgba(255,0,0,0.15);
+    border-radius: 16px;
+    color: white; cursor: pointer;
+    transition: all 0.25s ease;
+    animation: cardIn 0.7s both;
+  }
+  .tf-btn:nth-child(1) { animation-delay: 0.1s; }
+  .tf-btn:nth-child(2) { animation-delay: 0.15s; }
+  .tf-btn:nth-child(3) { animation-delay: 0.2s; }
+  .tf-btn:nth-child(4) { animation-delay: 0.25s; }
+
+  .tf-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,0,0,0.1), transparent);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .tf-btn:hover::before { opacity: 1; }
+  .tf-btn:hover {
+    border-color: rgba(255,0,0,0.4);
+    box-shadow: 0 0 20px rgba(255,0,0,0.2);
+    transform: translateY(-2px);
+  }
+  .tf-btn:active { transform: scale(0.97); }
+
+  .tf-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px; font-weight: 900;
+    color: var(--red);
+    display: block; margin-bottom: 4px;
+  }
+  .tf-label {
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+</style>
 </head>
-
-<body class="bg">
-
+<body>
+<div class="bg-layer"></div>
+<div class="grid-lines"></div>
 <div class="card">
-
-<img src="logo.png" class="logo">
-
-<h2>
-
-Выберите время сделки
-
-</h2>
-
-<div class="grid">
-
-<button onclick="choose(1)">1 минута</button>
-
-<button onclick="choose(3)">3 минуты</button>
-
-<button onclick="choose(5)">5 минут</button>
-
-<button onclick="choose(30)">30 минут</button>
-
+  <div class="logo-wrap">
+    <div class="logo-glow"></div>
+    <div class="logo-ring"></div>
+    <img src="logo.png" class="logo" alt="LART">
+  </div>
+  <h2>Выберите таймфрейм</h2>
+  <p class="subtitle">Время сделки</p>
+  <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+  <div class="grid">
+    <button class="tf-btn" onclick="choose(1)"><span class="tf-value">1</span><span class="tf-label">минута</span></button>
+    <button class="tf-btn" onclick="choose(3)"><span class="tf-value">3</span><span class="tf-label">минуты</span></button>
+    <button class="tf-btn" onclick="choose(5)"><span class="tf-value">5</span><span class="tf-label">минут</span></button>
+    <button class="tf-btn" onclick="choose(30)"><span class="tf-value">30</span><span class="tf-label">минут</span></button>
+  </div>
 </div>
-
-</div>
-
 <script>
-
-function choose(time){
-
-localStorage.setItem("time",time)
-
-window.location="loading.html"
-
+function choose(time) {
+  localStorage.setItem("time", time);
+  window.location = "loading.html";
 }
-
 </script>
-
 </body>
-
 </html>
