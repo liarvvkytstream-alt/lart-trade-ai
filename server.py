@@ -43,6 +43,8 @@ ADMIN_PASS = os.getenv("ADMIN_PASS", "lart2024admin")  # пароль для /ad
 conn = sqlite3.connect("users.db", check_same_thread=False)
 cursor = conn.cursor()
 
+cursor.execute
+cursor.execute("DROP TABLE IF EXISTS users")
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
