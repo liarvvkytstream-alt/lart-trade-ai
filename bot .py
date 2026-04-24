@@ -22,7 +22,7 @@ API_KEY = os.getenv("API_KEY")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "574717871"))
 
 # URL твоего приложения на Railway (замени на свой)
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://lart-trade-ai-production.up.railway.app/")
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://lart-trade-ai-production.up.railway.app"  )
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
