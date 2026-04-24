@@ -161,7 +161,7 @@ def analyze(df):
 
 def get_signal():
     best = {"symbol": None, "direction": "ВВЕРХ", "probability": 60, "score": 0}
-    candidates = random.sample(symbols, min(5, len(symbols)))
+    candidates = random.sample(symbols, min(15, len(symbols)))
     for symbol in candidates:
         df = get_data(symbol)
         if df is None or len(df) < 60:
