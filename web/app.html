@@ -8,116 +8,134 @@
 <style>
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   :root { --red:#ff0000; --red-dim:#8a0000; --gold:#c9a84c; --gold-light:#f0d080; }
-  body { background:#050000; font-family:'Rajdhani',sans-serif; color:white; display:flex; justify-content:center; align-items:center; min-height:100vh; overflow:hidden; }
+
+  body {
+    background:#050000;
+    font-family:'Rajdhani',sans-serif;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    min-height: -webkit-fill-available;
+    overflow-x:hidden;
+    padding: 20px 0;
+  }
+
   .bg-layer { position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(120,0,0,0.25) 0%, transparent 70%), #050000; }
   .grid-lines { position:fixed; inset:0; z-index:0; background-image:linear-gradient(rgba(255,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,0,0.04) 1px, transparent 1px); background-size:40px 40px; animation:gridMove 20s linear infinite; }
   @keyframes gridMove { to { transform:translateY(40px); } }
   .scanlines { position:fixed; inset:0; z-index:0; pointer-events:none; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); }
 
-  /* UNIQUE APP ANIMATION: battle stance — character pumps up, alert ready */
-  .character { position:fixed; bottom:0; z-index:2; pointer-events:none; transition:filter 0.3s; }
+  /* Characters — только на широких экранах */
+  .character { position:fixed; bottom:0; z-index:2; pointer-events:none; }
+  .character-left { left:-55px; }
+  .character-left img { width:300px; transform:scaleX(-1); filter:drop-shadow(-8px 0 30px rgba(255,0,0,0.6)) brightness(0.95); }
+  .character-right { right:-55px; }
+  .character-right img { width:300px; filter:drop-shadow(8px 0 30px rgba(255,0,0,0.6)) brightness(0.95); }
 
-  .character-left {
-    left:-55px;
-    animation: battleLeft 2.5s ease-in-out infinite;
-  }
-  .character-left img { width:330px; transform:scaleX(-1); filter:drop-shadow(-8px 0 30px rgba(255,0,0,0.6)) brightness(0.95); }
-
-  .character-right {
-    right:-55px;
-    animation: battleRight 2.5s ease-in-out infinite;
-    
-  }
-  .character-right img { width:330px; filter:drop-shadow(8px 0 30px rgba(255,0,0,0.6)) brightness(0.95); }
-
-  /* Sharp pump up and down — battle ready */
-  @keyframes battleLeft {
-    0%,100% { transform:translateY(0px) scale(1); }
-    30%      { transform:translateY(-14px) scale(1.02); }
-    60%      { transform:translateY(-6px) scale(1.01); }
-  }
-  @keyframes battleRight {
-    0%,100% { transform:translateY(0px) scale(1); }
-    30%      { transform:translateY(-14px) scale(1.02); }
-    60%      { transform:translateY(-6px) scale(1.01); }
+  /* Скрываем персонажей на мобильных */
+  @media (max-width: 900px) {
+    .character { display: none; }
+    .char-glow  { display: none; }
   }
 
-  /* Intense eye glow */
-  .eye-flash { position:fixed; z-index:3; pointer-events:none; width:70px; height:18px; border-radius:50%; background:radial-gradient(ellipse, rgba(255,0,0,1) 0%, transparent 70%); animation:intenseEye 2.5s ease-in-out infinite; }
-  .eye-flash-left  { left:72px; bottom:53%; }
-  .eye-flash-right { right:72px; bottom:53%; }
-  @keyframes intenseEye { 0%,100%{opacity:0.5;transform:scale(1);} 30%{opacity:1;transform:scale(1.6);box-shadow:0 0 25px rgba(255,0,0,0.9);} }
-
-  /* Signal flash overlay — fires when signal received */
-  .signal-flash { position:fixed; inset:0; z-index:20; pointer-events:none; background:rgba(255,0,0,0.08); opacity:0; transition:opacity 0.1s; }
+  .signal-flash { position:fixed; inset:0; z-index:20; pointer-events:none; background:rgba(255,0,0,0.08); opacity:0; }
   .signal-flash.active { animation:flashBurst 0.6s ease-out forwards; }
   @keyframes flashBurst { 0%{opacity:0.4;} 100%{opacity:0;} }
 
-  /* Energy lines shooting from characters when signal fires */
-  .energy-line { position:fixed; bottom:40%; z-index:1; height:2px; background:linear-gradient(90deg, transparent, rgba(255,0,0,0.6), transparent); width:0; opacity:0; }
-  .energy-line-left  { left:0; animation:energyLeft 2.5s ease-in-out infinite; }
-  .energy-line-right { right:0; animation:energyRight 2.5s ease-in-out infinite; animation-delay:-1.25s; }
-  @keyframes energyLeft  { 0%,60%{width:0;opacity:0;left:0;}   30%{width:35%;opacity:1;left:0;} 50%{width:50%;opacity:0;} }
-  @keyframes energyRight { 0%,60%{width:0;opacity:0;right:0;}  30%{width:35%;opacity:1;right:0;} 50%{width:50%;opacity:0;} }
-
-  .char-glow { position:fixed; bottom:0; width:300px; height:120px; z-index:1; pointer-events:none; background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,0,0,0.22) 0%, transparent 80%); }
+  .char-glow { position:fixed; bottom:0; width:280px; height:110px; z-index:1; pointer-events:none; background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,0,0,0.2) 0%, transparent 80%); }
   .char-glow-left{left:-70px;} .char-glow-right{right:-70px;}
+
   .side-deco { position:fixed; top:0; bottom:0; width:3px; z-index:1; pointer-events:none; background:linear-gradient(180deg, transparent, rgba(255,0,0,0.35) 30%, rgba(255,0,0,0.7) 50%, rgba(255,0,0,0.35) 70%, transparent); animation:sidePulse 2.5s ease-in-out infinite; }
   .side-deco-left{left:0;} .side-deco-right{right:0;}
   @keyframes sidePulse { 0%,100%{opacity:0.5;} 50%{opacity:1;} }
-  .corner { position:fixed; width:40px; height:40px; z-index:3; }
-  .corner::before, .corner::after { content:''; position:absolute; background:var(--red); box-shadow:0 0 10px var(--red); }
-  .corner-tl{top:16px;left:16px;} .corner-tl::before{top:0;left:0;width:100%;height:2px;} .corner-tl::after{top:0;left:0;width:2px;height:100%;}
-  .corner-tr{top:16px;right:16px;} .corner-tr::before{top:0;right:0;width:100%;height:2px;} .corner-tr::after{top:0;right:0;width:2px;height:100%;}
-  .corner-bl{bottom:16px;left:16px;} .corner-bl::before{bottom:0;left:0;width:100%;height:2px;} .corner-bl::after{bottom:0;left:0;width:2px;height:100%;}
-  .corner-br{bottom:16px;right:16px;} .corner-br::before{bottom:0;right:0;width:100%;height:2px;} .corner-br::after{bottom:0;right:0;width:2px;height:100%;}
 
-  /* CARD */
-  .card { position:relative; z-index:10; background:rgba(15,0,0,0.88); border:1px solid rgba(255,0,0,0.18); border-radius:24px; padding:32px 26px 28px; width:92%; max-width:390px; text-align:center; backdrop-filter:blur(24px); box-shadow:0 0 80px rgba(255,0,0,0.15); animation:cardIn 0.8s cubic-bezier(0.16,1,0.3,1) both; }
-  .card::before, .card::after { content:''; position:absolute; width:22px; height:22px; border-color:var(--red); border-style:solid; }
+  .corner { position:fixed; width:32px; height:32px; z-index:3; }
+  .corner::before, .corner::after { content:''; position:absolute; background:var(--red); box-shadow:0 0 8px var(--red); }
+  .corner-tl{top:12px;left:12px;} .corner-tl::before{top:0;left:0;width:100%;height:2px;} .corner-tl::after{top:0;left:0;width:2px;height:100%;}
+  .corner-tr{top:12px;right:12px;} .corner-tr::before{top:0;right:0;width:100%;height:2px;} .corner-tr::after{top:0;right:0;width:2px;height:100%;}
+  .corner-bl{bottom:12px;left:12px;} .corner-bl::before{bottom:0;left:0;width:100%;height:2px;} .corner-bl::after{bottom:0;left:0;width:2px;height:100%;}
+  .corner-br{bottom:12px;right:12px;} .corner-br::before{bottom:0;right:0;width:100%;height:2px;} .corner-br::after{bottom:0;right:0;width:2px;height:100%;}
+
+  /* ===================== TOAST ===================== */
+  .toast {
+    position:fixed; top:16px; right:16px; z-index:100;
+    background:rgba(10,0,0,0.95); border:1px solid rgba(255,0,0,0.4);
+    border-radius:14px; padding:12px 16px; width:220px;
+    box-shadow:0 0 30px rgba(255,0,0,0.3); backdrop-filter:blur(20px);
+    transform:translateX(140%); transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    pointer-events:none;
+  }
+  .toast.show { transform:translateX(0); }
+  .toast-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .toast-icon { width:28px; height:28px; border-radius:50%; background:rgba(255,0,0,0.15); border:1px solid rgba(255,0,0,0.4); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; animation:toastPulse 1s ease-in-out infinite; }
+  @keyframes toastPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,0,0,0.4);} 50%{box-shadow:0 0 0 5px rgba(255,0,0,0);} }
+  .toast-title { font-family:'Orbitron',monospace; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--red); }
+  .toast-body { font-size:12px; color:rgba(255,255,255,0.65); line-height:1.5; }
+  .toast-body strong { color:white; }
+  .toast-prob { font-family:'Orbitron',monospace; font-size:16px; font-weight:900; color:#00ff88; text-shadow:0 0 10px rgba(0,255,136,0.5); }
+  .toast-bar { height:2px; background:rgba(255,0,0,0.15); border-radius:2px; margin-top:8px; overflow:hidden; }
+  .toast-bar-fill { height:100%; background:var(--red); border-radius:2px; width:100%; transition:width linear; }
+
+  /* ===================== CARD ===================== */
+  .card {
+    position:relative; z-index:10;
+    background:rgba(15,0,0,0.88);
+    border:1px solid rgba(255,0,0,0.18);
+    border-radius:24px;
+    padding:28px 22px 24px;
+    width:calc(100% - 32px);
+    max-width:390px;
+    text-align:center;
+    backdrop-filter:blur(24px);
+    box-shadow:0 0 60px rgba(255,0,0,0.15);
+    animation:cardIn 0.8s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .card::before, .card::after { content:''; position:absolute; width:20px; height:20px; border-color:var(--red); border-style:solid; }
   .card::before{top:-1px;left:-1px;border-width:2px 0 0 2px;border-radius:24px 0 0 0;}
   .card::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-radius:0 0 24px 0;}
-  @keyframes cardIn { from{opacity:0;transform:translateY(28px) scale(0.96);}to{opacity:1;transform:none;} }
+  @keyframes cardIn { from{opacity:0;transform:translateY(24px) scale(0.97);}to{opacity:1;transform:none;} }
 
-  .logo-wrap { position:relative; width:70px; height:70px; margin:0 auto 14px; }
+  .logo-wrap { position:relative; width:70px; height:70px; margin:0 auto 12px; }
   .logo-ring { position:absolute; inset:-6px; border-radius:50%; border:1.5px solid rgba(255,0,0,0.35); animation:spin 6s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg);} }
   .logo-glow { position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle, rgba(255,0,0,0.25) 0%, transparent 70%); animation:pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100%{opacity:0.6;} 50%{opacity:1;} }
   .logo { width:70px; height:70px; border-radius:50%; object-fit:cover; position:relative; z-index:1; filter:drop-shadow(0 0 12px rgba(255,0,0,0.6)); }
 
-  h1 { font-family:'Orbitron',monospace; font-size:13px; font-weight:900; letter-spacing:2px; background:linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:3px; }
-  .tf-label { font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
-  .divider { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  h1 { font-family:'Orbitron',monospace; font-size:14px; font-weight:900; letter-spacing:2px; background:linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:3px; }
+  .tf-label { font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+  .divider { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
   .divider-line { flex:1; height:1px; background:linear-gradient(90deg, transparent, rgba(255,0,0,0.35), transparent); }
   .divider-diamond { width:5px; height:5px; background:var(--red); transform:rotate(45deg); box-shadow:0 0 6px var(--red); }
 
-  .tf-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
-  .tf-btn { padding:10px 4px; background:rgba(255,0,0,0.05); border:1px solid rgba(255,0,0,0.12); border-radius:10px; color:rgba(255,255,255,0.5); cursor:pointer; font-family:'Orbitron',monospace; font-size:10px; transition:all 0.2s; }
-  .tf-btn.active { border-color:rgba(255,0,0,0.5); color:white; background:rgba(255,0,0,0.12); box-shadow:0 0 12px rgba(255,0,0,0.2); }
+  .tf-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:14px; }
+  .tf-btn { padding:10px 4px; background:rgba(255,0,0,0.05); border:1px solid rgba(255,0,0,0.12); border-radius:10px; color:rgba(255,255,255,0.5); cursor:pointer; font-family:'Orbitron',monospace; font-size:9px; transition:all 0.2s; }
+  .tf-btn.active { border-color:rgba(255,0,0,0.5); color:white; background:rgba(255,0,0,0.12); box-shadow:0 0 10px rgba(255,0,0,0.2); }
 
-  .signal-box { background:rgba(255,0,0,0.05); border:1px solid rgba(255,0,0,0.15); border-radius:18px; padding:20px 16px; margin-bottom:14px; position:relative; overflow:hidden; min-height:150px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+  .signal-box { background:rgba(255,0,0,0.05); border:1px solid rgba(255,0,0,0.15); border-radius:16px; padding:18px 14px; margin-bottom:12px; position:relative; overflow:hidden; min-height:140px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
   .signal-box::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,0,0,0.5), transparent); }
 
   .loading-radar { display:flex; flex-direction:column; align-items:center; gap:10px; }
-  .radar-mini { width:48px; height:48px; border:2px solid rgba(255,0,0,0.2); border-radius:50%; position:relative; }
+  .radar-mini { width:44px; height:44px; border:2px solid rgba(255,0,0,0.2); border-radius:50%; position:relative; }
   .radar-mini::after { content:''; position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 0deg, rgba(255,0,0,0.6) 0deg, transparent 90deg); animation:radarSpin 1.5s linear infinite; }
   @keyframes radarSpin { to{transform:rotate(360deg);} }
-  .loading-text { font-size:11px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1.5px; animation:blink 1s ease-in-out infinite; }
+  .loading-text { font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1.5px; animation:blink 1s ease-in-out infinite; }
   @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
-  .pair-val { font-family:'Orbitron',monospace; font-size:22px; font-weight:900; background:linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; }
-  .dir { font-family:'Orbitron',monospace; font-size:26px; font-weight:900; letter-spacing:2px; }
+  .pair-val { font-family:'Orbitron',monospace; font-size:20px; font-weight:900; background:linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:10px; }
+  .dir { font-family:'Orbitron',monospace; font-size:24px; font-weight:900; letter-spacing:2px; }
   .dir.up   { color:#00ff88; text-shadow:0 0 20px rgba(0,255,136,0.5); }
   .dir.down { color:var(--red); text-shadow:0 0 20px rgba(255,0,0,0.6); }
-  .arrow { font-size:22px; margin-bottom:10px; }
+  .arrow { font-size:20px; margin-bottom:10px; }
 
   .stats-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; margin-top:10px; }
   .stat { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:9px 8px; }
-  .stat-val { font-family:'Orbitron',monospace; font-size:15px; font-weight:700; color:var(--red); }
+  .stat-val { font-family:'Orbitron',monospace; font-size:14px; font-weight:700; color:var(--red); }
   .stat-lbl { font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
 
-  .prob-wrap { margin:12px 0; }
+  .prob-wrap { margin:10px 0; }
   .prob-header { display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1px; }
   .prob-val-label { font-family:'Orbitron',monospace; color:var(--red); }
   .prob-track { height:5px; background:rgba(255,0,0,0.1); border-radius:5px; overflow:hidden; }
@@ -126,9 +144,9 @@
   .get-btn { display:block; width:100%; padding:16px; background:linear-gradient(90deg,var(--red) 0%,#cc0000 50%,var(--red-dim) 100%); color:white; border:none; border-radius:14px; cursor:pointer; font-family:'Orbitron',monospace; font-weight:700; font-size:11px; letter-spacing:2px; text-transform:uppercase; box-shadow:0 0 28px rgba(255,0,0,0.4); transition:all 0.25s; position:relative; overflow:hidden; }
   .get-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); transform:translateX(-100%); transition:transform 0.5s; }
   .get-btn:hover::before { transform:translateX(100%); }
-  .get-btn:hover { transform:translateY(-2px); box-shadow:0 0 48px rgba(255,0,0,0.65); }
-  .get-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-  .logout { margin-top:14px; font-size:11px; color:rgba(255,255,255,0.2); cursor:pointer; text-decoration:underline; }
+  .get-btn:active { transform:scale(0.98); }
+  .get-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .logout { margin-top:12px; font-size:11px; color:rgba(255,255,255,0.2); cursor:pointer; text-decoration:underline; }
 </style>
 </head>
 <body>
@@ -140,11 +158,18 @@
 <div class="corner corner-bl"></div><div class="corner corner-br"></div>
 <div class="side-deco side-deco-left"></div><div class="side-deco side-deco-right"></div>
 <div class="char-glow char-glow-left"></div><div class="char-glow char-glow-right"></div>
-<div class="eye-flash eye-flash-left"></div><div class="eye-flash eye-flash-right"></div>
-<div class="energy-line energy-line-left"></div>
-<div class="energy-line energy-line-right"></div>
 <div class="character character-left"><img src="character.png" alt=""></div>
 <div class="character character-right"><img src="character.png" alt=""></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-top">
+    <div class="toast-icon">⚡</div>
+    <div class="toast-title">Сильный сигнал!</div>
+  </div>
+  <div class="toast-body" id="toast-body">Готовьтесь!</div>
+  <div class="toast-bar"><div class="toast-bar-fill" id="toast-bar-fill"></div></div>
+</div>
 
 <div class="card">
   <div class="logo-wrap"><div class="logo-glow"></div><div class="logo-ring"></div><img src="logo.png" class="logo" alt="LART"></div>
@@ -175,10 +200,58 @@
 const pocket_id = localStorage.getItem('pocket_id');
 if (!pocket_id) window.location='login.html';
 let selectedTF = 1;
+let toastTimer = null;
 
 function setTF(btn, tf) {
   document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); selectedTF=tf;
+}
+
+function playAlert(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (type === 'strong') {
+      [0, 0.15, 0.3].forEach((delay, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 600 + i * 150;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+        gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + delay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.12);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.15);
+      });
+    } else {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 440; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
+    }
+  } catch(e) {}
+}
+
+function showToast(probability, symbol) {
+  const toast = document.getElementById('toast');
+  const body  = document.getElementById('toast-body');
+  const bar   = document.getElementById('toast-bar-fill');
+
+  body.innerHTML = `Пара: <strong>${symbol}</strong><br>Точность: <span class="toast-prob">${probability}%</span>`;
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    bar.style.transition = 'width 4s linear';
+    bar.style.width = '0%';
+  }, 50);
+
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 4500);
 }
 
 async function getSignal() {
@@ -193,11 +266,18 @@ async function getSignal() {
     if (res.status===403){window.location='login.html';return;}
     const data=await res.json();
     const isUp=data.direction.includes('ВВЕРХ');
+    const prob=parseInt(data.probability);
 
-    // Flash effect
     const flash=document.getElementById('flash');
     flash.classList.add('active');
     setTimeout(()=>flash.classList.remove('active'),600);
+
+    if (prob >= 80) {
+      playAlert('strong');
+      showToast(prob, data.symbol);
+    } else {
+      playAlert('normal');
+    }
 
     box.innerHTML=`
       <div class="pair-val">${data.symbol}</div>
@@ -205,11 +285,11 @@ async function getSignal() {
       <div class="arrow" style="color:${isUp?'#00ff88':'#ff0000'}">${isUp?'▲':'▼'}</div>
       <div class="stats-row">
         <div class="stat"><div class="stat-val">${data.timeframe} мин</div><div class="stat-lbl">Таймфрейм</div></div>
-        <div class="stat"><div class="stat-val">${data.probability}%</div><div class="stat-lbl">Точность</div></div>
+        <div class="stat"><div class="stat-val">${prob}%</div><div class="stat-lbl">Точность</div></div>
       </div>`;
 
-    document.getElementById('prob-label').textContent=data.probability+'%';
-    setTimeout(()=>{document.getElementById('prob-bar').style.width=data.probability+'%';},100);
+    document.getElementById('prob-label').textContent=prob+'%';
+    setTimeout(()=>{document.getElementById('prob-bar').style.width=prob+'%';},100);
   } catch(e) {
     box.innerHTML=`<div style="color:#ff4444;font-size:12px;">Ошибка получения сигнала</div>`;
   }
@@ -219,4 +299,4 @@ async function getSignal() {
 function logout(){ window.location='login.html'; }
 </script>
 </body>
-</html>function logout(){ window.location='login.html'; }
+</html>
