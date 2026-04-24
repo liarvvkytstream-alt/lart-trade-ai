@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LART Trade AI — Вход</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root { --red:#ff0000; --red-dim:#8a0000; --gold:#c9a84c; --gold-light:#f0d080; }
+  body { background:#050000; font-family:'Rajdhani',sans-serif; color:white; display:flex; justify-content:center; align-items:center; min-height:100vh; overflow:hidden; }
+  .bg-layer { position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(120,0,0,0.25) 0%, transparent 70%), #050000; }
+  .grid-lines { position:fixed; inset:0; z-index:0; background-image:linear-gradient(rgba(255,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,0,0.04) 1px, transparent 1px); background-size:40px 40px; animation:gridMove 20s linear infinite; }
+  @keyframes gridMove { to { transform:translateY(40px); } }
+  .scanlines { position:fixed; inset:0; z-index:0; pointer-events:none; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); }
+
+  /* UNIQUE LOGIN ANIMATION: characters lean toward card, alternating */
+  .character { position:fixed; bottom:0; z-index:2; pointer-events:none; }
+
+  .character-left {
+    left: -50px;
+    transform-origin: bottom center;
+    animation: leanIn 3s ease-in-out infinite;
+  }
+  .character-left img { width:320px; transform:scaleX(-1); filter:drop-shadow(-6px 0 25px rgba(255,0,0,0.55)) brightness(0.88); }
+
+  .character-right {
+    right: -50px;
+    transform-origin: bottom center;
+    animation: leanIn 3s ease-in-out infinite;
+    animation-delay: -1.5s;
+  }
+  .character-right img { width:320px; filter:drop-shadow(6px 0 25px rgba(255,0,0,0.55)) brightness(0.88); }
+
+  /* Lean forward toward the center */
+  @keyframes leanIn {
+    0%, 100% { transform:rotate(0deg) translateY(0px); }
+    50%       { transform:rotate(-4deg) translateY(-10px); }
+  }
+
+  /* Eye flash effect — aggressive login vibe */
+  .eye-flash {
+    position:fixed; z-index:3; pointer-events:none;
+    width:60px; height:16px; border-radius:50%;
+    background:radial-gradient(ellipse, rgba(255,0,0,1) 0%, transparent 70%);
+    animation:eyeFlash 3s ease-in-out infinite;
+  }
+  .eye-flash-left  { left:80px;  bottom:52%; }
+  .eye-flash-right { right:80px; bottom:52%; }
+  @keyframes eyeFlash {
+    0%,40%,60%,100% { opacity:0.3; transform:scaleX(1); }
+    50% { opacity:1; transform:scaleX(1.5); box-shadow:0 0 20px rgba(255,0,0,0.8); }
+  }
+
+  .char-glow { position:fixed; bottom:0; width:280px; height:100px; z-index:1; pointer-events:none; background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,0,0,0.18) 0%, transparent 80%); }
+  .char-glow-left { left:-70px; } .char-glow-right { right:-70px; }
+
+  .side-deco { position:fixed; top:0; bottom:0; width:3px; z-index:1; pointer-events:none; background:linear-gradient(180deg, transparent 0%, rgba(255,0,0,0.3) 30%, rgba(255,0,0,0.6) 50%, rgba(255,0,0,0.3) 70%, transparent 100%); animation:sidePulse 3s ease-in-out infinite; }
+  .side-deco-left { left:0; } .side-deco-right { right:0; }
+  @keyframes sidePulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+
+  .corner { position:fixed; width:40px; height:40px; z-index:3; }
+  .corner::before, .corner::after { content:''; position:absolute; background:var(--red); box-shadow:0 0 8px var(--red); }
+  .corner-tl { top:16px; left:16px; } .corner-tl::before { top:0;left:0;width:100%;height:2px; } .corner-tl::after { top:0;left:0;width:2px;height:100%; }
+  .corner-tr { top:16px; right:16px; } .corner-tr::before { top:0;right:0;width:100%;height:2px; } .corner-tr::after { top:0;right:0;width:2px;height:100%; }
+  .corner-bl { bottom:16px; left:16px; } .corner-bl::before { bottom:0;left:0;width:100%;height:2px; } .corner-bl::after { bottom:0;left:0;width:2px;height:100%; }
+  .corner-br { bottom:16px; right:16px; } .corner-br::before { bottom:0;right:0;width:100%;height:2px; } .corner-br::after { bottom:0;right:0;width:2px;height:100%; }
+
+  .card { position:relative; z-index:10; background:rgba(15,0,0,0.88); border:1px solid rgba(255,0,0,0.18); border-radius:24px; padding:44px 32px 36px; width:92%; max-width:400px; text-align:center; backdrop-filter:blur(24px); box-shadow:0 0 80px rgba(255,0,0,0.15); animation:cardIn 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+  .card::before, .card::after { content:''; position:absolute; width:22px; height:22px; border-color:var(--red); border-style:solid; }
+  .card::before { top:-1px;left:-1px;border-width:2px 0 0 2px;border-radius:24px 0 0 0; }
+  .card::after  { bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-radius:0 0 24px 0; }
+  @keyframes cardIn { from{opacity:0;transform:translateY(28px) scale(0.96);} to{opacity:1;transform:none;} }
+
+  .logo-wrap { position:relative; width:88px; height:88px; margin:0 auto 18px; }
+  .logo-ring { position:absolute; inset:-7px; border-radius:50%; border:1.5px solid rgba(255,0,0,0.35); animation:spin 8s linear infinite; }
+  .logo-ring::before { content:''; position:absolute; top:-2px; left:50%; width:5px; height:5px; background:var(--red); border-radius:50%; box-shadow:0 0 8px var(--red); transform:translateX(-50%); }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .logo-glow { position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle, rgba(255,0,0,0.25) 0%, transparent 70%); animation:pulse 2.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.6;transform:scale(1);} 50%{opacity:1;transform:scale(1.12);} }
+  .logo { width:88px; height:88px; border-radius:50%; object-fit:cover; position:relative; z-index:1; filter:drop-shadow(0 0 12px rgba(255,0,0,0.6)); }
+
+  h1 { font-family:'Orbitron',monospace; font-size:18px; font-weight:900; letter-spacing:2px; background:linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:4px; }
+  .subtitle { font-size:11px; color:rgba(255,255,255,0.3); letter-spacing:2px; text-transform:uppercase; margin-bottom:24px; }
+  .divider { display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+  .divider-line { flex:1; height:1px; background:linear-gradient(90deg, transparent, rgba(255,0,0,0.35), transparent); }
+  .divider-diamond { width:5px; height:5px; background:var(--red); transform:rotate(45deg); box-shadow:0 0 6px var(--red); }
+
+  .field { margin-bottom:14px; text-align:left; }
+  .field label { display:block; font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:7px; }
+  .field input { width:100%; padding:13px 15px; background:rgba(255,0,0,0.05); border:1px solid rgba(255,0,0,0.15); border-radius:12px; color:white; font-family:'Rajdhani',sans-serif; font-size:15px; outline:none; transition:border-color 0.2s, box-shadow 0.2s; }
+  .field input:focus { border-color:rgba(255,0,0,0.45); box-shadow:0 0 14px rgba(255,0,0,0.18); }
+  .field input::placeholder { color:rgba(255,255,255,0.18); }
+
+  .btn { display:block; width:100%; margin-top:6px; padding:17px; background:linear-gradient(90deg,var(--red) 0%,#cc0000 50%,var(--red-dim) 100%); color:white; border:none; border-radius:14px; cursor:pointer; font-family:'Orbitron',monospace; font-weight:700; font-size:11px; letter-spacing:2px; text-transform:uppercase; box-shadow:0 0 28px rgba(255,0,0,0.45); transition:all 0.25s ease; position:relative; overflow:hidden; }
+  .btn::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); transform:translateX(-100%); transition:transform 0.5s; }
+  .btn:hover::before { transform:translateX(100%); }
+  .btn:hover { transform:translateY(-2px); box-shadow:0 0 48px rgba(255,0,0,0.65); }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+  .error { color:#ff4444; font-size:12px; margin-top:8px; display:none; }
+  .reg-link { margin-top:18px; font-size:12px; color:rgba(255,255,255,0.3); }
+  .reg-link a { color:var(--red); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="grid-lines"></div>
+<div class="scanlines"></div>
+<div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div><div class="corner corner-br"></div>
+<div class="side-deco side-deco-left"></div>
+<div class="side-deco side-deco-right"></div>
+<div class="char-glow char-glow-left"></div>
+<div class="char-glow char-glow-right"></div>
+<div class="eye-flash eye-flash-left"></div>
+<div class="eye-flash eye-flash-right"></div>
+<div class="character character-left"><img src="character.png" alt=""></div>
+<div class="character character-right"><img src="character.png" alt=""></div>
+
+<div class="card">
+  <div class="logo-wrap"><div class="logo-glow"></div><div class="logo-ring"></div><img src="logo.png" class="logo" alt="LART"></div>
+  <h1>LART Trade AI</h1>
+  <p class="subtitle">Вход в систему</p>
+  <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+  <div class="field"><label>PocketOption ID</label><input type="text" id="pocket_id" placeholder="Введите ваш ID"></div>
+  <button class="btn" onclick="login()">⚡ Войти</button>
+  <div class="error" id="error"></div>
+  <div class="reg-link">Нет аккаунта? <a href="index.html">Регистрация</a></div>
+</div>
+
+<script>
+const saved = localStorage.getItem('pocket_id');
+if (saved) document.getElementById('pocket_id').value = saved;
+
+async function login() {
+  const pocket_id = document.getElementById('pocket_id').value.trim();
+  const errEl = document.getElementById('error');
+  const btn = document.querySelector('.btn');
+  errEl.style.display = 'none';
+  if (!pocket_id) { errEl.textContent='Введите PocketOption ID'; errEl.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='Проверка...';
+  const res = await fetch('/api/check', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pocket_id}) });
+  const data = await res.json();
+  if (!data.ok) { errEl.textContent='ID не найден. Сначала пройдите регистрацию.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='⚡ Войти'; return; }
+  localStorage.setItem('pocket_id', pocket_id);
+  if (data.status==='approved') window.location='app.html';
+  else if (data.status==='pending') window.location='pending.html';
+  else { errEl.textContent='Заявка отклонена. Обратитесь в поддержку.'; errEl.style.display='block'; btn.disabled=false; btn.textContent='⚡ Войти'; }
+}
+</script>
+</body>
+</html>

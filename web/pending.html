@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LART Trade AI — Ожидание</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root { --red:#ff0000; --red-dim:#8a0000; --gold:#c9a84c; --gold-light:#f0d080; }
+  body { background:#050000; font-family:'Rajdhani',sans-serif; color:white; display:flex; justify-content:center; align-items:center; min-height:100vh; overflow:hidden; }
+  .bg-layer { position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(120,0,0,0.2) 0%, transparent 70%), #050000; }
+  .grid-lines { position:fixed; inset:0; z-index:0; background-image:linear-gradient(rgba(255,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,0,0.04) 1px, transparent 1px); background-size:40px 40px; animation:gridMove 20s linear infinite; }
+  @keyframes gridMove { to { transform:translateY(40px); } }
+  .scanlines { position:fixed; inset:0; z-index:0; pointer-events:none; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); }
+
+  /* UNIQUE PENDING ANIMATION: slow side-to-side sway — patient watching */
+  .character { position:fixed; bottom:0; z-index:2; pointer-events:none; }
+
+  .character-left {
+    left:-55px;
+    transform-origin: bottom center;
+    animation: swayLeft 5s ease-in-out infinite;
+  }
+  .character-left img { width:310px; transform:scaleX(-1); filter:drop-shadow(-5px 0 20px rgba(255,100,0,0.4)) brightness(0.75) saturate(0.8); }
+
+  .character-right {
+    right:-55px;
+    transform-origin: bottom center;
+    animation: swayRight 5s ease-in-out infinite;
+    animation-delay: -2.5s;
+  }
+  .character-right img { width:310px; filter:drop-shadow(5px 0 20px rgba(255,100,0,0.4)) brightness(0.75) saturate(0.8); }
+
+  /* Slow patient sway */
+  @keyframes swayLeft  { 0%,100%{transform:rotate(2deg);} 50%{transform:rotate(-2deg);} }
+  @keyframes swayRight { 0%,100%{transform:rotate(-2deg);} 50%{transform:rotate(2deg);} }
+
+  /* Dim eye glow — waiting, watching */
+  .eye-flash { position:fixed; z-index:3; pointer-events:none; width:50px; height:12px; border-radius:50%; background:radial-gradient(ellipse, rgba(255,80,0,0.8) 0%, transparent 70%); animation:dimEye 5s ease-in-out infinite; }
+  .eye-flash-left  { left:75px; bottom:52%; }
+  .eye-flash-right { right:75px; bottom:52%; }
+  @keyframes dimEye { 0%,100%{opacity:0.3;} 50%{opacity:0.7;} }
+
+  /* Floating question marks — waiting vibe */
+  .float-particle { position:fixed; z-index:1; font-family:'Orbitron',monospace; font-size:14px; color:rgba(255,0,0,0.25); animation:floatUp 6s ease-in-out infinite; pointer-events:none; }
+  @keyframes floatUp { 0%{transform:translateY(0) rotate(0deg); opacity:0;} 20%{opacity:1;} 80%{opacity:0.5;} 100%{transform:translateY(-120px) rotate(20deg); opacity:0;} }
+
+  .char-glow { position:fixed; bottom:0; width:280px; height:100px; z-index:1; pointer-events:none; background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,60,0,0.15) 0%, transparent 80%); }
+  .char-glow-left { left:-70px; } .char-glow-right { right:-70px; }
+  .side-deco { position:fixed; top:0; bottom:0; width:2px; z-index:1; pointer-events:none; background:linear-gradient(180deg, transparent, rgba(255,60,0,0.25) 30%, rgba(255,60,0,0.5) 50%, rgba(255,60,0,0.25) 70%, transparent); animation:sidePulse 5s ease-in-out infinite; }
+  .side-deco-left { left:0; } .side-deco-right { right:0; }
+  @keyframes sidePulse { 0%,100%{opacity:0.3;} 50%{opacity:0.8;} }
+  .corner { position:fixed; width:40px; height:40px; z-index:3; }
+  .corner::before, .corner::after { content:''; position:absolute; background:rgba(255,60,0,0.6); box-shadow:0 0 6px rgba(255,60,0,0.4); }
+  .corner-tl{top:16px;left:16px;} .corner-tl::before{top:0;left:0;width:100%;height:2px;} .corner-tl::after{top:0;left:0;width:2px;height:100%;}
+  .corner-tr{top:16px;right:16px;} .corner-tr::before{top:0;right:0;width:100%;height:2px;} .corner-tr::after{top:0;right:0;width:2px;height:100%;}
+  .corner-bl{bottom:16px;left:16px;} .corner-bl::before{bottom:0;left:0;width:100%;height:2px;} .corner-bl::after{bottom:0;left:0;width:2px;height:100%;}
+  .corner-br{bottom:16px;right:16px;} .corner-br::before{bottom:0;right:0;width:100%;height:2px;} .corner-br::after{bottom:0;right:0;width:2px;height:100%;}
+
+  .card { position:relative; z-index:10; background:rgba(15,0,0,0.88); border:1px solid rgba(255,0,0,0.15); border-radius:24px; padding:48px 32px; width:92%; max-width:400px; text-align:center; backdrop-filter:blur(24px); box-shadow:0 0 80px rgba(255,0,0,0.12); animation:cardIn 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+  .card::before, .card::after { content:''; position:absolute; width:22px; height:22px; border-color:var(--red); border-style:solid; }
+  .card::before{top:-1px;left:-1px;border-width:2px 0 0 2px;border-radius:24px 0 0 0;}
+  .card::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-radius:0 0 24px 0;}
+  @keyframes cardIn { from{opacity:0;transform:translateY(28px) scale(0.96);}to{opacity:1;transform:none;} }
+
+  .spinner { width:80px; height:80px; margin:0 auto 28px; border:3px solid rgba(255,0,0,0.1); border-top:3px solid var(--red); border-radius:50%; animation:spin 1.2s linear infinite; box-shadow:0 0 20px rgba(255,0,0,0.2); }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  h2 { font-family:'Orbitron',monospace; font-size:15px; font-weight:700; letter-spacing:2px; background:linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:10px; }
+  p { font-size:13px; color:rgba(255,255,255,0.4); line-height:1.7; }
+  .id-box { margin:22px 0; background:rgba(255,0,0,0.05); border:1px solid rgba(255,0,0,0.12); border-radius:12px; padding:14px; }
+  .id-label { font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px; }
+  .id-value { font-family:'Orbitron',monospace; font-size:18px; color:var(--red); }
+  .check-btn { display:block; width:100%; padding:16px; background:rgba(255,0,0,0.08); border:1px solid rgba(255,0,0,0.2); color:white; border-radius:14px; cursor:pointer; font-family:'Rajdhani',sans-serif; font-weight:600; font-size:14px; letter-spacing:1px; transition:all 0.25s; }
+  .check-btn:hover { background:rgba(255,0,0,0.15); }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="grid-lines"></div>
+<div class="scanlines"></div>
+<div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div><div class="corner corner-br"></div>
+<div class="side-deco side-deco-left"></div><div class="side-deco side-deco-right"></div>
+<div class="char-glow char-glow-left"></div><div class="char-glow char-glow-right"></div>
+<div class="eye-flash eye-flash-left"></div><div class="eye-flash eye-flash-right"></div>
+
+<!-- floating particles -->
+<div class="float-particle" style="left:12%;bottom:30%;animation-delay:0s;">?</div>
+<div class="float-particle" style="left:8%;bottom:40%;animation-delay:2s;">...</div>
+<div class="float-particle" style="right:12%;bottom:35%;animation-delay:1s;">?</div>
+<div class="float-particle" style="right:8%;bottom:45%;animation-delay:3s;">⏳</div>
+
+<div class="character character-left"><img src="character.png" alt=""></div>
+<div class="character character-right"><img src="character.png" alt=""></div>
+
+<div class="card">
+  <div class="spinner"></div>
+  <h2>Заявка на проверке</h2>
+  <p>Администратор проверяет ваши данные.<br>Обычно это занимает до 24 часов.</p>
+  <div class="id-box">
+    <div class="id-label">Ваш PocketOption ID</div>
+    <div class="id-value" id="pid">—</div>
+  </div>
+  <button class="check-btn" onclick="checkStatus()">🔄 Проверить статус</button>
+</div>
+
+<script>
+const pocket_id = localStorage.getItem('pocket_id');
+if (pocket_id) document.getElementById('pid').textContent = pocket_id;
+async function checkStatus() {
+  const res = await fetch('/api/check', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pocket_id}) });
+  const data = await res.json();
+  if (data.ok && data.status==='approved') window.location='app.html';
+}
+setInterval(checkStatus, 30000);
+</script>
+</body>
+</html>
