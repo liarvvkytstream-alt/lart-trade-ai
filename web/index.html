@@ -67,7 +67,7 @@
   .character-right {
     right: -60px;
     animation: floatRight 4s ease-in-out infinite;
-    animation-delay: -2s;
+    
   }
   .character-right img {
     width: 340px;
@@ -121,6 +121,61 @@
   .side-deco-left  { left: 0; }
   .side-deco-right { right: 0; }
   @keyframes sidePulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+
+  /* ===================== HUD PANELS ===================== */
+  .hud {
+    position: fixed; z-index: 3; pointer-events: none;
+    font-family: 'Orbitron', monospace;
+  }
+  .hud-tl { top: 60px; left: 20px; }
+  .hud-tr { top: 60px; right: 20px; text-align: right; }
+
+  .hud-title {
+    font-size: 9px; letter-spacing: 2px; color: var(--red);
+    margin-bottom: 8px; opacity: 0.7;
+  }
+  .hud-row {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 8px; color: rgba(255,255,255,0.35);
+    letter-spacing: 1.5px; margin-bottom: 4px;
+  }
+  .hud-tr .hud-row { flex-direction: row-reverse; }
+  .hud-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: #00ff88; box-shadow: 0 0 4px #00ff88;
+    flex-shrink: 0;
+  }
+  .hud-line {
+    height: 1px; background: rgba(255,0,0,0.2);
+    margin: 8px 0;
+  }
+  .hud-coord {
+    font-size: 8px; color: rgba(255,0,0,0.4);
+    letter-spacing: 1px; margin-bottom: 3px;
+  }
+
+  /* Vertical tech lines on sides */
+  .tech-line {
+    position: fixed; top: 80px; bottom: 80px;
+    width: 1px; z-index: 1; pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(255,0,0,0.15) 20%, rgba(255,0,0,0.15) 80%, transparent);
+  }
+  .tech-line-left  { left: 180px; }
+  .tech-line-right { right: 180px; }
+
+  /* Tick marks on tech lines */
+  .tech-ticks {
+    position: fixed; z-index: 1; pointer-events: none;
+    display: flex; flex-direction: column; gap: 40px;
+    top: 120px;
+  }
+  .tech-ticks-left  { left: 174px; }
+  .tech-ticks-right { right: 174px; }
+  .tick {
+    width: 8px; height: 1px;
+    background: rgba(255,0,0,0.25);
+  }
+  .tick-long { width: 14px; background: rgba(255,0,0,0.4); }
 
   /* Corner brackets */
   .corner { position: fixed; width: 40px; height: 40px; z-index: 3; }
@@ -230,9 +285,53 @@
 <div class="corner corner-bl"></div>
 <div class="corner corner-br"></div>
 
+<!-- TOP LEFT HUD -->
+<div class="hud hud-tl">
+  <div class="hud-title">LART TRADE AI</div>
+  <div class="hud-row"><span class="hud-dot"></span>SYSTEM ONLINE</div>
+  <div class="hud-row"><span class="hud-dot"></span>AI ACTIVE</div>
+  <div class="hud-line"></div>
+  <div class="hud-coord">X: 48.2093° N</div>
+  <div class="hud-coord">Y: 16.3732° E</div>
+</div>
+
+<!-- TOP RIGHT HUD -->
+<div class="hud hud-tr">
+  <div class="hud-title">SIGNAL ENGINE</div>
+  <div class="hud-row"><span class="hud-dot"></span>MARKET SCAN</div>
+  <div class="hud-row"><span class="hud-dot"></span>22 PAIRS LOADED</div>
+  <div class="hud-line"></div>
+  <div class="hud-coord">ACC: 87%</div>
+  <div class="hud-coord">VER: 2.4.1</div>
+</div>
+
 <!-- Side lines -->
 <div class="side-deco side-deco-left"></div>
 <div class="side-deco side-deco-right"></div>
+
+<!-- Tech vertical lines -->
+<div class="tech-line tech-line-left"></div>
+<div class="tech-line tech-line-right"></div>
+<div class="tech-ticks tech-ticks-left">
+  <div class="tick tick-long"></div>
+  <div class="tick"></div>
+  <div class="tick"></div>
+  <div class="tick tick-long"></div>
+  <div class="tick"></div>
+  <div class="tick"></div>
+  <div class="tick tick-long"></div>
+  <div class="tick"></div>
+</div>
+<div class="tech-ticks tech-ticks-right">
+  <div class="tick tick-long"></div>
+  <div class="tick"></div>
+  <div class="tick"></div>
+  <div class="tick tick-long"></div>
+  <div class="tick"></div>
+  <div class="tick"></div>
+  <div class="tick tick-long"></div>
+  <div class="tick"></div>
+</div>
 
 <!-- Floor glow under characters -->
 <div class="char-glow char-glow-left"></div>
