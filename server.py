@@ -8,7 +8,8 @@ import os
 import asyncio
 import threading
 import logging
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
@@ -34,27 +35,35 @@ TOKEN      = os.getenv("BOT_TOKEN")
 API_KEY    = os.getenv("API_KEY")
 ADMIN_ID   = int(os.getenv("ADMIN_ID", "574717871"))
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://lart-trade-ai-production.up.railway.app")
-ADMIN_PASS = os.getenv("ADMIN_PASS", "lart2024admin")  # пароль для /admin
+ADMIN_PASS = os.getenv("ADMIN_PASS", "lart2024admin")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # ======================
-# DATABASE
+# DATABASE (PostgreSQL)
 # ======================
 
-conn = sqlite3.connect("users.db", check_same_thread=False)
-cursor = conn.cursor()
+def get_db():
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    return conn
 
-cursor.execute
-cursor.execute("DROP TABLE IF EXISTS users")
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    pocket_id TEXT UNIQUE,
-    status TEXT DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
-""")
-conn.commit()
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            pocket_id TEXT UNIQUE,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+    logging.info("✅ База данных инициализирована")
+
+init_db()
 
 # ======================
 # СПИСОК ПАР
@@ -145,8 +154,8 @@ def analyze(df):
     if not signals:
         return "ВВЕРХ", 60, 0
 
-    up   = signals.count(1)
-    down = signals.count(-1)
+    up    = signals.count(1)
+    down  = signals.count(-1)
     total = len(signals)
 
     if up >= down:
@@ -189,26 +198,40 @@ def register():
     if not name or not pocket_id:
         return jsonify({"ok": False, "error": "Заполните все поля"}), 400
     try:
-        cursor.execute("INSERT INTO users (name, pocket_id, status) VALUES (?, ?, 'pending')", (name, pocket_id))
+        conn = get_db()
+        cur  = conn.cursor()
+        cur.execute(
+            "INSERT INTO users (name, pocket_id, status) VALUES (%s, %s, 'pending')",
+            (name, pocket_id)
+        )
         conn.commit()
+        cur.close(); conn.close()
         return jsonify({"ok": True})
-    except sqlite3.IntegrityError:
-        # Пользователь уже существует — проверим статус
-        cursor.execute("SELECT status FROM users WHERE pocket_id=?", (pocket_id,))
-        user = cursor.fetchone()
+    except psycopg2.errors.UniqueViolation:
+        conn.rollback()
+        cur.close(); conn.close()
+        conn2 = get_db(); cur2 = conn2.cursor()
+        cur2.execute("SELECT status FROM users WHERE pocket_id=%s", (pocket_id,))
+        user = cur2.fetchone()
+        cur2.close(); conn2.close()
         if user:
-            return jsonify({"ok": True, "status": user[0]})
+            return jsonify({"ok": True, "status": user["status"]})
         return jsonify({"ok": False, "error": "ID уже зарегистрирован"}), 400
+    except Exception as e:
+        logging.error(f"register error: {e}")
+        return jsonify({"ok": False, "error": "Ошибка сервера"}), 500
 
 
 @app.route("/api/check", methods=["POST"])
 def check_status():
     pocket_id = request.json.get("pocket_id", "").strip()
-    cursor.execute("SELECT status FROM users WHERE pocket_id=?", (pocket_id,))
-    user = cursor.fetchone()
+    conn = get_db(); cur = conn.cursor()
+    cur.execute("SELECT status FROM users WHERE pocket_id=%s", (pocket_id,))
+    user = cur.fetchone()
+    cur.close(); conn.close()
     if not user:
         return jsonify({"ok": False, "error": "Пользователь не найден"}), 404
-    return jsonify({"ok": True, "status": user[0]})
+    return jsonify({"ok": True, "status": user["status"]})
 
 
 # ======================
@@ -228,9 +251,11 @@ def admin_login():
 def admin_users():
     if not session.get("admin"):
         return jsonify({"ok": False}), 403
-    cursor.execute("SELECT id, name, pocket_id, status, created_at FROM users ORDER BY created_at DESC")
-    rows = cursor.fetchall()
-    users = [{"id": r[0], "name": r[1], "pocket_id": r[2], "status": r[3], "created_at": r[4]} for r in rows]
+    conn = get_db(); cur = conn.cursor()
+    cur.execute("SELECT id, name, pocket_id, status, created_at FROM users ORDER BY created_at DESC")
+    rows = cur.fetchall()
+    cur.close(); conn.close()
+    users = [{"id": r["id"], "name": r["name"], "pocket_id": r["pocket_id"], "status": r["status"], "created_at": str(r["created_at"])} for r in rows]
     return jsonify({"ok": True, "users": users})
 
 
@@ -239,8 +264,9 @@ def admin_approve():
     if not session.get("admin"):
         return jsonify({"ok": False}), 403
     pocket_id = request.json.get("pocket_id")
-    cursor.execute("UPDATE users SET status='approved' WHERE pocket_id=?", (pocket_id,))
-    conn.commit()
+    conn = get_db(); cur = conn.cursor()
+    cur.execute("UPDATE users SET status='approved' WHERE pocket_id=%s", (pocket_id,))
+    conn.commit(); cur.close(); conn.close()
     return jsonify({"ok": True})
 
 
@@ -249,8 +275,9 @@ def admin_reject():
     if not session.get("admin"):
         return jsonify({"ok": False}), 403
     pocket_id = request.json.get("pocket_id")
-    cursor.execute("UPDATE users SET status='rejected' WHERE pocket_id=?", (pocket_id,))
-    conn.commit()
+    conn = get_db(); cur = conn.cursor()
+    cur.execute("UPDATE users SET status='rejected' WHERE pocket_id=%s", (pocket_id,))
+    conn.commit(); cur.close(); conn.close()
     return jsonify({"ok": True})
 
 
@@ -261,11 +288,12 @@ def admin_reject():
 @app.route("/signal")
 def signal():
     pocket_id = request.args.get("pocket_id", "")
-    # Проверяем доступ
     if pocket_id:
-        cursor.execute("SELECT status FROM users WHERE pocket_id=?", (pocket_id,))
-        user = cursor.fetchone()
-        if not user or user[0] != "approved":
+        conn = get_db(); cur = conn.cursor()
+        cur.execute("SELECT status FROM users WHERE pocket_id=%s", (pocket_id,))
+        user = cur.fetchone()
+        cur.close(); conn.close()
+        if not user or user["status"] != "approved":
             return jsonify({"error": "access_denied"}), 403
 
     timeframe = request.args.get("timeframe", 1)

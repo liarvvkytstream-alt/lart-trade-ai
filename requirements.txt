@@ -5,3 +5,4 @@ pandas==2.2.2
 gunicorn==22.0.0
 ta==0.11.0
 aiogram==3.7.0
+psycopg2-binary==2.9.9
