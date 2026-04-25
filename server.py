@@ -62,13 +62,12 @@ init_db()
 # ======================
 
 symbols = [
-    "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD",
+    "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD",
     "EURGBP", "EURJPY", "EURCHF", "EURAUD", "EURCAD",
     "GBPJPY", "GBPCHF", "GBPAUD", "GBPCAD",
-    "AUDJPY", "AUDCHF", "AUDCAD",
-    "CADJPY", "CADCHF", "NZDJPY", "NZDCAD"
+    "AUDJPY", "AUDCHF", "AUDCAD","CADJPY", "CADCHF",
+    "NZDJPY", "NZDCAD","CHFJPY", "EURNZD", "GBPNZD", "AUDNZD", "NZDCHF"
 ]
-
 # ======================
 # ПОЛУЧЕНИЕ ДАННЫХ
 # ======================
