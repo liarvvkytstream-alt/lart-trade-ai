@@ -27,28 +27,22 @@ app = Flask(
 app.secret_key = os.getenv("SECRET_KEY", "lart-secret-2024")
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# ======================
-# НАСТРОЙКИ
-# ======================
-
-TOKEN      = os.getenv("BOT_TOKEN")
-API_KEY    = os.getenv("API_KEY")
-ADMIN_ID   = int(os.getenv("ADMIN_ID", "574717871"))
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://lart-trade-ai-production.up.railway.app")
-ADMIN_PASS = os.getenv("ADMIN_PASS", "lart2024admin")
+TOKEN        = os.getenv("BOT_TOKEN")
+API_KEY      = os.getenv("API_KEY")
+ADMIN_ID     = int(os.getenv("ADMIN_ID", "574717871"))
+WEBAPP_URL   = os.getenv("WEBAPP_URL", "https://lart-trade-ai-production.up.railway.app")
+ADMIN_PASS   = os.getenv("ADMIN_PASS", "lart2024admin")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # ======================
-# DATABASE (PostgreSQL)
+# DATABASE
 # ======================
 
 def get_db():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def init_db():
-    conn = get_db()
-    cur = conn.cursor()
+    conn = get_db(); cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -58,9 +52,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    conn.commit()
-    cur.close()
-    conn.close()
+    conn.commit(); cur.close(); conn.close()
     logging.info("✅ База данных инициализирована")
 
 init_db()
@@ -78,7 +70,7 @@ symbols = [
 ]
 
 # ======================
-# SIGNAL LOGIC
+# ПОЛУЧЕНИЕ ДАННЫХ
 # ======================
 
 def get_data(symbol):
@@ -99,20 +91,149 @@ def get_data(symbol):
         return None
 
 
+# ======================
+# ПАТТЕРНЫ ЯПОНСКИХ СВЕЧЕЙ
+# ======================
+
+def candle_patterns(df):
+    """
+    Анализирует паттерны японских свечей.
+    Возвращает список сигналов: +1 = вверх, -1 = вниз, 0 = нейтрально
+    """
+    signals = []
+    o = df["open"]
+    h = df["high"]
+    l = df["low"]
+    c = df["close"]
+
+    if len(df) < 3:
+        return signals
+
+    # Последние 3 свечи
+    o1, h1, l1, c1 = o.iloc[-3], h.iloc[-3], l.iloc[-3], c.iloc[-3]
+    o2, h2, l2, c2 = o.iloc[-2], h.iloc[-2], l.iloc[-2], c.iloc[-2]
+    o3, h3, l3, c3 = o.iloc[-1], h.iloc[-1], l.iloc[-1], c.iloc[-1]
+
+    body3 = abs(c3 - o3)
+    range3 = h3 - l3
+    body2 = abs(c2 - o2)
+    range2 = h2 - l2
+
+    # Защита от деления на ноль
+    if range3 == 0 or range2 == 0:
+        return signals
+
+    # --- МОЛОТ (Hammer) — бычий разворот ---
+    # Тело маленькое вверху, длинная нижняя тень
+    upper_shadow3 = h3 - max(o3, c3)
+    lower_shadow3 = min(o3, c3) - l3
+    if (body3 / range3 < 0.3 and
+        lower_shadow3 > body3 * 2 and
+        upper_shadow3 < body3 * 0.5):
+        signals.append(1)
+        logging.info("📍 Паттерн: Молот (бычий)")
+
+    # --- ПОВЕШЕННЫЙ (Hanging Man) — медвежий разворот ---
+    # Такой же как молот, но на вершине тренда
+    if (body3 / range3 < 0.3 and
+        lower_shadow3 > body3 * 2 and
+        upper_shadow3 < body3 * 0.5 and
+        c3 < o3):  # медвежья свеча
+        signals.append(-1)
+
+    # --- ДОДЖИ (Doji) — нейтрально, рынок не знает куда ---
+    if body3 / range3 < 0.1:
+        # Доджи не добавляем в сигналы, просто пропускаем
+        pass
+
+    # --- БЫЧЬЕ ПОГЛОЩЕНИЕ (Bullish Engulfing) ---
+    # Медвежья свеча поглощается бычьей
+    if (c2 < o2 and          # предыдущая медвежья
+        c3 > o3 and          # текущая бычья
+        o3 <= c2 and         # открылась ниже закрытия предыдущей
+        c3 >= o2):           # закрылась выше открытия предыдущей
+        signals.append(1)
+        signals.append(1)    # двойной вес — сильный паттерн
+        logging.info("📍 Паттерн: Бычье поглощение")
+
+    # --- МЕДВЕЖЬЕ ПОГЛОЩЕНИЕ (Bearish Engulfing) ---
+    if (c2 > o2 and          # предыдущая бычья
+        c3 < o3 and          # текущая медвежья
+        o3 >= c2 and         # открылась выше закрытия предыдущей
+        c3 <= o2):           # закрылась ниже открытия предыдущей
+        signals.append(-1)
+        signals.append(-1)   # двойной вес
+        logging.info("📍 Паттерн: Медвежье поглощение")
+
+    # --- ТРИ БЕЛЫХ СОЛДАТА (Three White Soldiers) — сильный бычий тренд ---
+    if (c1 > o1 and c2 > o2 and c3 > o3 and   # все три бычьи
+        c3 > c2 > c1 and                        # каждая выше предыдущей
+        o3 > o2 > o1):                          # открытия растут
+        signals.append(1)
+        signals.append(1)
+        logging.info("📍 Паттерн: Три белых солдата")
+
+    # --- ТРИ ЧЁРНЫХ ВОРОНЫ (Three Black Crows) — сильный медвежий тренд ---
+    if (c1 < o1 and c2 < o2 and c3 < o3 and   # все три медвежьи
+        c3 < c2 < c1 and                        # каждая ниже предыдущей
+        o3 < o2 < o1):                          # открытия снижаются
+        signals.append(-1)
+        signals.append(-1)
+        logging.info("📍 Паттерн: Три чёрных вороны")
+
+    # --- УТРЕННЯЯ ЗВЕЗДА (Morning Star) — бычий разворот ---
+    if (c1 < o1 and                    # первая медвежья
+        body2 / range2 < 0.3 and       # вторая маленькая (звезда)
+        c3 > o3 and                    # третья бычья
+        c3 > (o1 + c1) / 2):          # закрылась выше середины первой
+        signals.append(1)
+        signals.append(1)
+        logging.info("📍 Паттерн: Утренняя звезда")
+
+    # --- ВЕЧЕРНЯЯ ЗВЕЗДА (Evening Star) — медвежий разворот ---
+    if (c1 > o1 and                    # первая бычья
+        body2 / range2 < 0.3 and       # вторая маленькая (звезда)
+        c3 < o3 and                    # третья медвежья
+        c3 < (o1 + c1) / 2):          # закрылась ниже середины первой
+        signals.append(-1)
+        signals.append(-1)
+        logging.info("📍 Паттерн: Вечерняя звезда")
+
+    # --- ПИНБАР (Pin Bar) — разворот ---
+    # Длинная тень в одну сторону, маленькое тело
+    upper_shadow = h3 - max(o3, c3)
+    lower_shadow = min(o3, c3) - l3
+    if upper_shadow > range3 * 0.6 and body3 < range3 * 0.2:
+        signals.append(-1)  # длинная верхняя тень = давление продавцов
+        logging.info("📍 Паттерн: Пинбар (медвежий)")
+    if lower_shadow > range3 * 0.6 and body3 < range3 * 0.2:
+        signals.append(1)   # длинная нижняя тень = давление покупателей
+        logging.info("📍 Паттерн: Пинбар (бычий)")
+
+    return signals
+
+
+# ======================
+# АНАЛИЗ СИГНАЛА
+# ======================
+
 def analyze(df):
     close = df["close"]
     signals = []
 
+    # --- EMA 20/50 ---
     ema20 = ta.trend.ema_indicator(close, window=20)
     ema50 = ta.trend.ema_indicator(close, window=50)
     if not pd.isna(ema20.iloc[-1]):
         signals.append(1 if ema20.iloc[-1] > ema50.iloc[-1] else -1)
 
+    # --- EMA 9/21 ---
     ema9  = ta.trend.ema_indicator(close, window=9)
     ema21 = ta.trend.ema_indicator(close, window=21)
     if not pd.isna(ema9.iloc[-1]):
         signals.append(1 if ema9.iloc[-1] > ema21.iloc[-1] else -1)
 
+    # --- RSI ---
     rsi = ta.momentum.rsi(close, window=14)
     rsi_val = rsi.iloc[-1]
     if not pd.isna(rsi_val):
@@ -120,6 +241,7 @@ def analyze(df):
         elif rsi_val > 60: signals.append(-1)
         else:              signals.append(1 if rsi.iloc[-1] > rsi.iloc[-2] else -1)
 
+    # --- MACD ---
     macd_diff = ta.trend.macd_diff(close)
     macd_line = ta.trend.macd(close)
     macd_sig  = ta.trend.macd_signal(close)
@@ -130,6 +252,7 @@ def analyze(df):
         elif macd_line.iloc[-2] > macd_sig.iloc[-2] and macd_line.iloc[-1] < macd_sig.iloc[-1]:
             signals.append(-1)
 
+    # --- Bollinger Bands ---
     bb = ta.volatility.BollingerBands(close, window=20, window_dev=2)
     bb_low  = bb.bollinger_lband().iloc[-1]
     bb_high = bb.bollinger_hband().iloc[-1]
@@ -140,6 +263,7 @@ def analyze(df):
         elif price > bb_high: signals.append(-1)
         else:                 signals.append(1 if price > bb_mid else -1)
 
+    # --- Stochastic ---
     stoch = ta.momentum.StochasticOscillator(df["high"], df["low"], close, window=14, smooth_window=3)
     sk = stoch.stoch().iloc[-1]
     sd = stoch.stoch_signal().iloc[-1]
@@ -148,8 +272,13 @@ def analyze(df):
         elif sk > 80: signals.append(-1)
         else:         signals.append(1 if sk > sd else -1)
 
+    # --- Momentum ---
     if len(close) >= 10:
         signals.append(1 if close.iloc[-1] > close.iloc[-10] else -1)
+
+    # --- Паттерны японских свечей ---
+    candle_signals = candle_patterns(df)
+    signals.extend(candle_signals)
 
     if not signals:
         return "ВВЕРХ", 60, 0
@@ -168,9 +297,14 @@ def analyze(df):
     return direction, prob, score
 
 
+# ======================
+# ПОЛУЧЕНИЕ СИГНАЛА
+# ======================
+
 def get_signal():
     best = {"symbol": None, "direction": "ВВЕРХ", "probability": 60, "score": 0}
     candidates = random.sample(symbols, min(15, len(symbols)))
+
     for symbol in candidates:
         df = get_data(symbol)
         if df is None or len(df) < 60:
@@ -179,8 +313,13 @@ def get_signal():
             direction, probability, score = analyze(df)
             if score > best["score"]:
                 best = {"symbol": symbol, "direction": direction, "probability": probability, "score": score}
+            # Нашли 70%+ — сразу возвращаем
+            if probability >= 70:
+                logging.info(f"✅ Сигнал 70%+ найден: {symbol} {direction} {probability}%")
+                return symbol, direction, probability
         except Exception as e:
             logging.error(f"analyze error {symbol}: {e}")
+
     if best["symbol"] is None:
         best["symbol"] = random.choice(symbols)
     return best["symbol"], best["direction"], best["probability"]
@@ -198,22 +337,15 @@ def register():
     if not name or not pocket_id:
         return jsonify({"ok": False, "error": "Заполните все поля"}), 400
     try:
-        conn = get_db()
-        cur  = conn.cursor()
-        cur.execute(
-            "INSERT INTO users (name, pocket_id, status) VALUES (%s, %s, 'pending')",
-            (name, pocket_id)
-        )
-        conn.commit()
-        cur.close(); conn.close()
+        conn = get_db(); cur = conn.cursor()
+        cur.execute("INSERT INTO users (name, pocket_id, status) VALUES (%s, %s, 'pending')", (name, pocket_id))
+        conn.commit(); cur.close(); conn.close()
         return jsonify({"ok": True})
     except psycopg2.errors.UniqueViolation:
-        conn.rollback()
-        cur.close(); conn.close()
+        conn.rollback(); cur.close(); conn.close()
         conn2 = get_db(); cur2 = conn2.cursor()
         cur2.execute("SELECT status FROM users WHERE pocket_id=%s", (pocket_id,))
-        user = cur2.fetchone()
-        cur2.close(); conn2.close()
+        user = cur2.fetchone(); cur2.close(); conn2.close()
         if user:
             return jsonify({"ok": True, "status": user["status"]})
         return jsonify({"ok": False, "error": "ID уже зарегистрирован"}), 400
@@ -227,8 +359,7 @@ def check_status():
     pocket_id = request.json.get("pocket_id", "").strip()
     conn = get_db(); cur = conn.cursor()
     cur.execute("SELECT status FROM users WHERE pocket_id=%s", (pocket_id,))
-    user = cur.fetchone()
-    cur.close(); conn.close()
+    user = cur.fetchone(); cur.close(); conn.close()
     if not user:
         return jsonify({"ok": False, "error": "Пользователь не найден"}), 404
     return jsonify({"ok": True, "status": user["status"]})
@@ -253,8 +384,7 @@ def admin_users():
         return jsonify({"ok": False}), 403
     conn = get_db(); cur = conn.cursor()
     cur.execute("SELECT id, name, pocket_id, status, created_at FROM users ORDER BY created_at DESC")
-    rows = cur.fetchall()
-    cur.close(); conn.close()
+    rows = cur.fetchall(); cur.close(); conn.close()
     users = [{"id": r["id"], "name": r["name"], "pocket_id": r["pocket_id"], "status": r["status"], "created_at": str(r["created_at"])} for r in rows]
     return jsonify({"ok": True, "users": users})
 
@@ -291,19 +421,13 @@ def signal():
     if pocket_id:
         conn = get_db(); cur = conn.cursor()
         cur.execute("SELECT status FROM users WHERE pocket_id=%s", (pocket_id,))
-        user = cur.fetchone()
-        cur.close(); conn.close()
+        user = cur.fetchone(); cur.close(); conn.close()
         if not user or user["status"] != "approved":
             return jsonify({"error": "access_denied"}), 403
 
     timeframe = request.args.get("timeframe", 1)
     symbol, direction, probability = get_signal()
-    return jsonify({
-        "symbol": symbol,
-        "direction": direction,
-        "probability": probability,
-        "timeframe": timeframe
-    })
+    return jsonify({"symbol": symbol, "direction": direction, "probability": probability, "timeframe": timeframe})
 
 
 # ======================
