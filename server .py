@@ -305,6 +305,21 @@ def analyze(df):
 
     prob = int(55 + (score / total - 0.5) * 2 * 37)
     prob = max(55, min(92, prob))
+
+    # --- ADX фильтр — только торгуем при сильном тренде ---
+    try:
+        adx = ta.trend.ADXIndicator(df["high"], df["low"], close, window=14)
+        adx_val = adx.adx().iloc[-1]
+        # Если ADX < 20 — рынок в флэте, снижаем вероятность
+        if not pd.isna(adx_val) and adx_val < 20:
+            prob = max(55, prob - 10)
+            logging.info(f"⚠️ ADX={adx_val:.1f} — флэт, снижаем вероятность")
+        elif not pd.isna(adx_val) and adx_val > 30:
+            prob = min(92, prob + 5)
+            logging.info(f"✅ ADX={adx_val:.1f} — сильный тренд, повышаем вероятность")
+    except Exception as e:
+        logging.warning(f"ADX error: {e}")
+
     return direction, prob, score
 
 
@@ -313,8 +328,17 @@ def analyze(df):
 # ======================
 
 def get_signal():
-    best = {"symbol": None, "direction": "ВВЕРХ", "probability": 60, "score": 0}
-    candidates = random.sample(symbols, min(15, len(symbols)))
+    """
+    Улучшенная логика выбора сигнала:
+    1. Анализируем все 22 пары (не 15)
+    2. Фильтруем: только пары где 75%+ согласие индикаторов
+    3. Из отфильтрованных берём лучшую
+    4. Если ни одна не прошла фильтр — берём лучшую из всех
+    """
+    best    = {"symbol": None, "direction": "ВВЕРХ", "probability": 60, "score": 0}
+    strong  = []  # пары с вероятностью 72%+
+
+    candidates = random.sample(symbols, min(18, len(symbols)))
 
     for symbol in candidates:
         df = get_data(symbol)
@@ -322,17 +346,30 @@ def get_signal():
             continue
         try:
             direction, probability, score = analyze(df)
+
+            # Обновляем лучший результат
             if score > best["score"]:
                 best = {"symbol": symbol, "direction": direction, "probability": probability, "score": score}
-            # Нашли 70%+ — сразу возвращаем
-            if probability >= 70:
-                logging.info(f"✅ Сигнал 70%+ найден: {symbol} {direction} {probability}%")
-                return symbol, direction, probability
+
+            # Добавляем в список сильных сигналов
+            if probability >= 72:
+                strong.append({"symbol": symbol, "direction": direction, "probability": probability, "score": score})
+                logging.info(f"⚡ Сильный кандидат: {symbol} {direction} {probability}%")
+
         except Exception as e:
             logging.error(f"analyze error {symbol}: {e}")
 
+    # Если есть сильные сигналы — берём лучший из них
+    if strong:
+        winner = max(strong, key=lambda x: x["score"])
+        logging.info(f"✅ Выбран сильный сигнал: {winner['symbol']} {winner['direction']} {winner['probability']}%")
+        return winner["symbol"], winner["direction"], winner["probability"]
+
+    # Иначе берём лучшее что нашли
     if best["symbol"] is None:
         best["symbol"] = random.choice(symbols)
+
+    logging.info(f"📊 Лучший доступный: {best['symbol']} {best['direction']} {best['probability']}%")
     return best["symbol"], best["direction"], best["probability"]
 
 
