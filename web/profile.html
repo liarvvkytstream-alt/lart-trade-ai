@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LART Trade AI — Профиль</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root { --red:#ff0000; --red-dim:#8a0000; --gold:#c9a84c; --gold-light:#f0d080; --green:#00ff88; }
+
+  body {
+    background:#050000; font-family:'Rajdhani',sans-serif; color:white;
+    min-height:100vh; padding:20px 16px 40px; overflow-x:hidden;
+  }
+
+  .bg-layer { position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 80% 40% at 50% 0%, rgba(120,0,0,0.2) 0%, transparent 70%), #050000; }
+  .grid-lines { position:fixed; inset:0; z-index:0; background-image:linear-gradient(rgba(255,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,0,0.03) 1px, transparent 1px); background-size:40px 40px; animation:gridMove 20s linear infinite; pointer-events:none; }
+  @keyframes gridMove { to { transform:translateY(40px); } }
+
+  .corner { position:fixed; width:28px; height:28px; z-index:3; pointer-events:none; }
+  .corner::before,.corner::after { content:''; position:absolute; background:var(--red); box-shadow:0 0 6px var(--red); }
+  .corner-tl{top:10px;left:10px;} .corner-tl::before{top:0;left:0;width:100%;height:2px;} .corner-tl::after{top:0;left:0;width:2px;height:100%;}
+  .corner-tr{top:10px;right:10px;} .corner-tr::before{top:0;right:0;width:100%;height:2px;} .corner-tr::after{top:0;right:0;width:2px;height:100%;}
+
+  .wrap { position:relative; z-index:1; max-width:420px; margin:0 auto; }
+
+  /* HEADER */
+  .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-top:8px; }
+  .back-btn { display:flex; align-items:center; gap:6px; font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1.5px; color:rgba(255,255,255,0.4); cursor:pointer; transition:color 0.2s; text-decoration:none; }
+  .back-btn:hover { color:var(--red); }
+  .header-title { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:2px; color:rgba(255,255,255,0.6); }
+
+  /* USER CARD */
+  .user-card {
+    background:rgba(15,0,0,0.85); border:1px solid rgba(255,0,0,0.18);
+    border-radius:20px; padding:20px; margin-bottom:14px;
+    backdrop-filter:blur(20px); box-shadow:0 0 40px rgba(255,0,0,0.1);
+    animation:fadeUp 0.6s ease both;
+  }
+  .user-card::before,.user-card::after { content:''; position:absolute; width:16px; height:16px; border-color:var(--red); border-style:solid; }
+  .user-card { position:relative; }
+  .user-card::before { top:-1px;left:-1px;border-width:2px 0 0 2px;border-radius:20px 0 0 0; }
+  .user-card::after  { bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-radius:0 0 20px 0; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;} }
+
+  .user-row { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+  .user-avatar {
+    width:52px; height:52px; border-radius:50%; flex-shrink:0;
+    background:rgba(255,0,0,0.1); border:1.5px solid rgba(255,0,0,0.3);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Orbitron',monospace; font-size:18px; font-weight:900;
+    color:var(--red); box-shadow:0 0 14px rgba(255,0,0,0.2);
+  }
+  .user-info { flex:1; }
+  .user-name { font-family:'Orbitron',monospace; font-size:14px; font-weight:700; margin-bottom:3px; }
+  .user-id { font-size:11px; color:rgba(255,255,255,0.35); letter-spacing:1px; }
+  .user-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.2); border-radius:20px; padding:2px 8px; font-size:9px; color:var(--green); letter-spacing:1px; margin-top:4px; }
+  .badge-dot { width:4px; height:4px; background:var(--green); border-radius:50%; box-shadow:0 0 4px var(--green); }
+
+  /* WINRATE BIG */
+  .winrate-block { text-align:center; padding:16px 0 4px; }
+  .winrate-label { font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; }
+  .winrate-value {
+    font-family:'Orbitron',monospace; font-size:52px; font-weight:900; line-height:1;
+    background:linear-gradient(135deg, var(--green) 0%, #00cc66 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    filter:drop-shadow(0 0 20px rgba(0,255,136,0.3));
+    transition:all 0.5s ease;
+  }
+  .winrate-value.low { background:linear-gradient(135deg, #ffc800, #ff8800); -webkit-background-clip:text; background-clip:text; filter:drop-shadow(0 0 20px rgba(255,200,0,0.3)); }
+  .winrate-value.zero { background:linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15)); -webkit-background-clip:text; background-clip:text; filter:none; }
+  .winrate-sub { font-size:11px; color:rgba(255,255,255,0.3); margin-top:4px; }
+
+  /* STATS ROW */
+  .stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:16px; }
+  .stat-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:10px 8px; text-align:center; }
+  .stat-val { font-family:'Orbitron',monospace; font-size:18px; font-weight:700; }
+  .stat-val.total { color:rgba(255,255,255,0.7); }
+  .stat-val.wins  { color:var(--green); }
+  .stat-val.losses{ color:var(--red); }
+  .stat-lbl { font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:3px; }
+
+  /* WINRATE BAR */
+  .wr-bar-wrap { margin-top:14px; }
+  .wr-bar-labels { display:flex; justify-content:space-between; font-size:10px; color:rgba(255,255,255,0.3); margin-bottom:5px; }
+  .wr-bar-track { height:6px; background:rgba(255,0,0,0.15); border-radius:6px; overflow:hidden; }
+  .wr-bar-fill { height:100%; background:linear-gradient(90deg, var(--red-dim), var(--green)); border-radius:6px; transition:width 1s cubic-bezier(0.16,1,0.3,1); width:0%; }
+
+  /* SECTION TITLE */
+  .section-title { font-family:'Orbitron',monospace; font-size:10px; letter-spacing:2px; color:rgba(255,255,255,0.4); text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .section-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg, rgba(255,0,0,0.2), transparent); }
+
+  /* SIGNAL CARDS */
+  .signals-list { display:flex; flex-direction:column; gap:8px; }
+
+  .signal-card {
+    background:rgba(15,0,0,0.7); border:1px solid rgba(255,0,0,0.12);
+    border-radius:14px; padding:14px; backdrop-filter:blur(10px);
+    animation:fadeUp 0.5s ease both;
+  }
+  .signal-card.win-card  { border-color:rgba(0,255,136,0.25); background:rgba(0,255,136,0.04); }
+  .signal-card.loss-card { border-color:rgba(255,0,0,0.3); background:rgba(255,0,0,0.06); }
+
+  .signal-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .signal-pair { font-family:'Orbitron',monospace; font-size:14px; font-weight:700; }
+  .signal-time { font-size:10px; color:rgba(255,255,255,0.3); }
+
+  .signal-middle { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .signal-dir { font-family:'Orbitron',monospace; font-size:16px; font-weight:900; }
+  .signal-dir.up   { color:var(--green); }
+  .signal-dir.down { color:var(--red); }
+  .signal-arrow { font-size:14px; }
+  .signal-meta { display:flex; gap:8px; margin-left:auto; }
+  .meta-chip { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:4px 8px; font-size:10px; color:rgba(255,255,255,0.4); }
+
+  /* RATE BUTTONS */
+  .rate-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .rate-btn { padding:9px; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:5px; }
+  .rate-win  { background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.3); color:var(--green); }
+  .rate-win:hover  { background:rgba(0,255,136,0.2); transform:translateY(-1px); }
+  .rate-loss { background:rgba(255,0,0,0.1); border:1px solid rgba(255,0,0,0.3); color:var(--red); }
+  .rate-loss:hover { background:rgba(255,0,0,0.2); transform:translateY(-1px); }
+
+  /* Result badge */
+  .result-badge { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600; }
+  .result-badge.win  { background:rgba(0,255,136,0.1); color:var(--green); border:1px solid rgba(0,255,136,0.2); }
+  .result-badge.loss { background:rgba(255,0,0,0.1); color:var(--red); border:1px solid rgba(255,0,0,0.2); }
+
+  /* Empty state */
+  .empty { text-align:center; padding:32px; color:rgba(255,255,255,0.2); font-size:13px; }
+  .empty-icon { font-size:32px; margin-bottom:8px; opacity:0.4; }
+
+  /* Loading */
+  .loading { text-align:center; padding:40px; }
+  .loading-ring { width:40px; height:40px; border:2px solid rgba(255,0,0,0.1); border-top:2px solid var(--red); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 12px; }
+  @keyframes spin { to{transform:rotate(360deg);} }
+
+  /* Floating toast */
+  .mini-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(60px); background:rgba(10,0,0,0.95); border:1px solid rgba(0,255,136,0.3); border-radius:10px; padding:10px 18px; font-size:12px; color:var(--green); z-index:100; transition:transform 0.3s ease; white-space:nowrap; }
+  .mini-toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="grid-lines"></div>
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+
+<div class="mini-toast" id="mini-toast"></div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <a class="back-btn" href="app.html">← НАЗАД</a>
+    <div class="header-title">МОЙ ПРОФИЛЬ</div>
+    <div style="width:60px"></div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div class="loading" id="loading">
+    <div class="loading-ring"></div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.3);">Загружаем профиль...</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content" style="display:none">
+
+    <!-- USER CARD -->
+    <div class="user-card">
+      <div class="user-row">
+        <div class="user-avatar" id="avatar">—</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">—</div>
+          <div class="user-id" id="user-id">ID: —</div>
+          <div class="user-badge"><div class="badge-dot"></div>APPROVED</div>
+        </div>
+      </div>
+
+      <!-- WINRATE -->
+      <div class="winrate-block">
+        <div class="winrate-label">Ваш Винрейт</div>
+        <div class="winrate-value zero" id="winrate-val">—%</div>
+        <div class="winrate-sub" id="winrate-sub">Оцените сигналы чтобы увидеть статистику</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-val total" id="stat-total">0</div>
+          <div class="stat-lbl">Всего</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val wins" id="stat-wins">0</div>
+          <div class="stat-lbl">👍 Побед</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val losses" id="stat-losses">0</div>
+          <div class="stat-lbl">👎 Потерь</div>
+        </div>
+      </div>
+
+      <!-- WIN/LOSS BAR -->
+      <div class="wr-bar-wrap">
+        <div class="wr-bar-labels">
+          <span>👎 Потери</span>
+          <span>👍 Победы</span>
+        </div>
+        <div class="wr-bar-track">
+          <div class="wr-bar-fill" id="wr-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGNAL HISTORY -->
+    <div class="section-title">История сигналов</div>
+    <div class="signals-list" id="signals-list"></div>
+
+  </div>
+</div>
+
+<script>
+const pocket_id = localStorage.getItem('pocket_id');
+if (!pocket_id) window.location = 'login.html';
+
+let profileData = null;
+
+function showToast(msg, color = '#00ff88') {
+  const t = document.getElementById('mini-toast');
+  t.textContent = msg;
+  t.style.borderColor = color + '44';
+  t.style.color = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function formatTime(str) {
+  if (!str) return '—';
+  const d = new Date(str);
+  return d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function updateStats(stats) {
+  document.getElementById('stat-total').textContent   = stats.total;
+  document.getElementById('stat-wins').textContent    = stats.wins;
+  document.getElementById('stat-losses').textContent  = stats.losses;
+
+  const wr = stats.winrate;
+  const wrEl = document.getElementById('winrate-val');
+  const wrSub = document.getElementById('winrate-sub');
+  const wrBar = document.getElementById('wr-bar');
+
+  if (stats.rated === 0) {
+    wrEl.textContent = '—%';
+    wrEl.className = 'winrate-value zero';
+    wrSub.textContent = 'Оцените сигналы чтобы увидеть статистику';
+    wrBar.style.width = '0%';
+  } else {
+    wrEl.textContent = wr + '%';
+    wrEl.className = 'winrate-value' + (wr >= 60 ? '' : ' low');
+    wrSub.textContent = `По ${stats.rated} оценённым сигналам`;
+    setTimeout(() => { wrBar.style.width = wr + '%'; }, 300);
+  }
+}
+
+function renderSignals(signals) {
+  const list = document.getElementById('signals-list');
+  list.innerHTML = '';
+
+  if (signals.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📊</div>Сигналов пока нет.<br>Получите первый сигнал!</div>`;
+    return;
+  }
+
+  signals.forEach((sig, idx) => {
+    const isUp = sig.direction.includes('ВВЕРХ');
+    const card = document.createElement('div');
+    card.className = 'signal-card' + (sig.result === 'win' ? ' win-card' : sig.result === 'loss' ? ' loss-card' : '');
+    card.style.animationDelay = (idx * 0.05) + 's';
+    card.id = `card-${sig.id}`;
+
+    const rateArea = sig.result === null ? `
+      <div class="rate-btns">
+        <button class="rate-btn rate-win" onclick="rateSignal(${sig.id}, 'win')">👍 Win</button>
+        <button class="rate-btn rate-loss" onclick="rateSignal(${sig.id}, 'loss')">👎 Loss</button>
+      </div>` : `
+      <div>
+        <span class="result-badge ${sig.result}">
+          ${sig.result === 'win' ? '👍 Победа' : '👎 Потеря'}
+        </span>
+      </div>`;
+
+    card.innerHTML = `
+      <div class="signal-top">
+        <div class="signal-pair">${sig.pair}</div>
+        <div class="signal-time">${formatTime(sig.created_at)}</div>
+      </div>
+      <div class="signal-middle">
+        <div class="signal-dir ${isUp ? 'up' : 'down'}">${isUp ? '▲' : '▼'} ${sig.direction}</div>
+        <div class="signal-meta">
+          <div class="meta-chip">${sig.timeframe} мин</div>
+          <div class="meta-chip">${sig.probability}%</div>
+        </div>
+      </div>
+      ${rateArea}`;
+
+    list.appendChild(card);
+  });
+}
+
+async function rateSignal(signalId, result) {
+  try {
+    const res = await fetch('/api/signal/rate', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ signal_id: signalId, pocket_id, result })
+    });
+    const data = await res.json();
+
+    if (!data.ok) { showToast('Ошибка: ' + data.error, '#ff4444'); return; }
+
+    showToast(result === 'win' ? '👍 Победа засчитана!' : '👎 Потеря засчитана!', result === 'win' ? '#00ff88' : '#ff4444');
+
+    // Обновляем карточку
+    const card = document.getElementById(`card-${signalId}`);
+    if (card) {
+      card.className = 'signal-card ' + (result === 'win' ? 'win-card' : 'loss-card');
+      const rateBtns = card.querySelector('.rate-btns');
+      if (rateBtns) {
+        const badge = document.createElement('div');
+        badge.innerHTML = `<span class="result-badge ${result}">${result === 'win' ? '👍 Победа' : '👎 Потеря'}</span>`;
+        rateBtns.replaceWith(badge);
+      }
+    }
+
+    // Пересчитываем статистику
+    if (profileData) {
+      const sig = profileData.signals.find(s => s.id === signalId);
+      if (sig) {
+        sig.result = result;
+        const rated  = profileData.signals.filter(s => s.result !== null);
+        const wins   = rated.filter(s => s.result === 'win').length;
+        const losses = rated.filter(s => s.result === 'loss').length;
+        const wr     = rated.length ? Math.round((wins / rated.length) * 100) : 0;
+        profileData.stats = { ...profileData.stats, wins, losses, rated: rated.length, winrate: wr };
+        updateStats(profileData.stats);
+      }
+    }
+
+  } catch(e) {
+    showToast('Ошибка соединения', '#ff4444');
+  }
+}
+
+async function loadProfile() {
+  try {
+    const res = await fetch(`/api/profile/${pocket_id}`);
+    const data = await res.json();
+
+    if (!data.ok) { window.location = 'login.html'; return; }
+
+    profileData = data;
+
+    // Заполняем имя и ID
+    const name = data.user.name || 'Трейдер';
+    document.getElementById('user-name').textContent = name;
+    document.getElementById('user-id').textContent = 'ID: ' + data.user.pocket_id;
+    document.getElementById('avatar').textContent = name.charAt(0).toUpperCase();
+
+    updateStats(data.stats);
+    renderSignals(data.signals);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('loading').innerHTML = `<div style="color:#ff4444;text-align:center">Ошибка загрузки профиля</div>`;
+  }
+}
+
+loadProfile();
+</script>
+</body>
+</html>
