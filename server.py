@@ -343,15 +343,13 @@ def get_signal():
     best    = {"symbol": None, "direction": "ВВЕРХ", "probability": 60, "score": 0}
     strong  = []  # пары с вероятностью 72%+
 
-    import time
-
-    # Берём только 6 пар — бесплатный TwelveData даёт 8 запросов/мин
-    candidates = random.sample(symbols, min(6, len(symbols)))
-    logging.info(f"🔍 Анализируем пары: {candidates}")
+    # Grow план — 55 запросов/мин, анализируем все пары
+    candidates = symbols.copy()
+    random.shuffle(candidates)
+    logging.info(f"🔍 Анализируем все {len(candidates)} пар")
 
     for symbol in candidates:
         df = get_data(symbol)
-        time.sleep(0.5)  # пауза чтобы не превысить лимит API
         if df is None or len(df) < 60:
             continue
         try:
