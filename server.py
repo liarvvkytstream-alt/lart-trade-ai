@@ -91,14 +91,19 @@ def get_data(symbol):
             f"?symbol={symbol}&interval=1min&outputsize=100&apikey={API_KEY}"
         )
         r = requests.get(url, timeout=10).json()
+
+        # Логируем ошибки API
         if "values" not in r:
+            logging.warning(f"❌ {symbol}: нет данных — {r.get('message', r.get('code', 'unknown'))}")
             return None
+
         df = pd.DataFrame(r["values"])
         for col in ["close", "high", "low", "open"]:
             df[col] = df[col].astype(float)
+        logging.info(f"✅ {symbol}: получено {len(df)} свечей")
         return df[::-1].reset_index(drop=True)
     except Exception as e:
-        logging.error(f"get_data error: {e}")
+        logging.error(f"get_data error {symbol}: {e}")
         return None
 
 
@@ -338,10 +343,15 @@ def get_signal():
     best    = {"symbol": None, "direction": "ВВЕРХ", "probability": 60, "score": 0}
     strong  = []  # пары с вероятностью 72%+
 
-    candidates = random.sample(symbols, min(18, len(symbols)))
+    import time
+
+    # Берём только 6 пар — бесплатный TwelveData даёт 8 запросов/мин
+    candidates = random.sample(symbols, min(6, len(symbols)))
+    logging.info(f"🔍 Анализируем пары: {candidates}")
 
     for symbol in candidates:
         df = get_data(symbol)
+        time.sleep(0.5)  # пауза чтобы не превысить лимит API
         if df is None or len(df) < 60:
             continue
         try:
@@ -367,7 +377,11 @@ def get_signal():
 
     # Иначе берём лучшее что нашли
     if best["symbol"] is None:
-        best["symbol"] = random.choice(symbols)
+        # Если вообще нет данных — хотя бы рандомное направление
+        fallback_symbol = random.choice(symbols)
+        fallback_direction = random.choice(["ВВЕРХ", "ВНИЗ"])
+        logging.error(f"⚠️ Нет данных ни по одной паре! API лимит? Возвращаем fallback: {fallback_symbol} {fallback_direction}")
+        return fallback_symbol, fallback_direction, 60
 
     logging.info(f"📊 Лучший доступный: {best['symbol']} {best['direction']} {best['probability']}%")
     return best["symbol"], best["direction"], best["probability"]
