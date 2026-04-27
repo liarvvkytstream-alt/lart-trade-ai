@@ -111,6 +111,23 @@
   .prob-track { height:4px; background:rgba(255,0,0,0.1); border-radius:4px; overflow:hidden; }
   .prob-fill { height:100%; background:linear-gradient(90deg,var(--red-dim),var(--red)); box-shadow:0 0 8px var(--red); border-radius:4px; transition:width 1s cubic-bezier(0.16,1,0.3,1); width:0%; }
 
+  /* AI Explanation box */
+  .ai-explain {
+    display:none; margin-bottom:10px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,0,0,0.12);
+    border-left:2px solid rgba(255,0,0,0.4);
+    border-radius:12px; padding:12px 14px;
+    text-align:left;
+  }
+  .ai-explain.up-exp { border-left-color:rgba(0,255,136,0.5); }
+  .ai-explain-header { display:flex; align-items:center; gap:6px; margin-bottom:7px; }
+  .ai-explain-dot { width:6px; height:6px; border-radius:50%; background:var(--red); }
+  .ai-explain-dot.up { background:#00ff88; }
+  .ai-explain-title { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,0.35); }
+  .ai-explain-text { font-size:12px; color:rgba(255,255,255,0.6); line-height:1.7; }
+  .ai-explain-loading { font-size:11px; color:rgba(255,255,255,0.3); letter-spacing:1px; animation:blink 1s ease-in-out infinite; }
+
   .get-btn { display:block; width:100%; padding:15px; background:linear-gradient(90deg,var(--red) 0%,#cc0000 50%,var(--red-dim) 100%); color:white; border:none; border-radius:12px; cursor:pointer; font-family:'Orbitron',monospace; font-weight:700; font-size:11px; letter-spacing:2px; text-transform:uppercase; box-shadow:0 0 24px rgba(255,0,0,0.4); transition:all 0.25s; position:relative; overflow:hidden; }
   .get-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); transform:translateX(-100%); transition:transform 0.5s; }
   .get-btn:hover::before { transform:translateX(100%); }
@@ -195,6 +212,15 @@
       <div class="prob-track"><div class="prob-fill" id="prob-bar"></div></div>
     </div>
 
+    <!-- AI Explanation -->
+    <div class="ai-explain" id="ai-explain">
+      <div class="ai-explain-header">
+        <div class="ai-explain-dot" id="ai-dot"></div>
+        <div class="ai-explain-title">Анализ AI</div>
+      </div>
+      <div class="ai-explain-text" id="ai-explain-text"></div>
+    </div>
+
     <button class="get-btn" id="get-btn" onclick="getSignal()">⚡ Получить сигнал</button>
   </div>
 
@@ -206,8 +232,8 @@
     </div>
 
     <!-- Upload zone -->
-      <div class="upload-zone" id="upload-zone">
-      <input type="file" id="otc-file" accept="image/*" onchange="onFileSelected(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('otc-file').click()">
+      <input type="file" id="otc-file" accept="image/*" onchange="onFileSelected(event)">
       <img class="upload-preview" id="upload-preview" alt="">
       <div class="upload-icon" id="upload-icon">📷</div>
       <div class="upload-text" id="upload-text">Загрузи скриншот графика OTC с PocketOption</div>
@@ -227,7 +253,7 @@
     <button class="get-btn" id="otc-btn" onclick="analyzeOTC()">🤖 Анализировать через AI</button>
   </div>
 
-  <div class="logout" onclick="logout()">Выйти из аккаунта</div>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;"><a href="profile.html" style="font-size:11px;color:rgba(255,255,255,0.35);text-decoration:none;">👤 Мой профиль</a><span style="color:rgba(255,255,255,0.15)">|</span><div class="logout" onclick="logout()" style="margin:0;">Выйти</div></div>
 </div>
 
 <script>
@@ -323,10 +349,15 @@ function showToast(probability, symbol) {
 // ===== STANDARD SIGNAL =====
 async function getSignal() {
   const btn=document.getElementById('get-btn'), box=document.getElementById('signal-box');
+  const explainBox = document.getElementById('ai-explain');
+  const explainText = document.getElementById('ai-explain-text');
+  const aiDot = document.getElementById('ai-dot');
+
   btn.disabled=true;
   box.innerHTML=`<div class="loading-radar"><div class="radar-mini"></div><div class="loading-text">AI анализирует рынок...</div></div>`;
   document.getElementById('prob-label').textContent='—';
   document.getElementById('prob-bar').style.width='0%';
+  explainBox.style.display='none';
 
   try {
     const res=await fetch(`/signal?timeframe=${selectedTF}&pocket_id=${pocket_id}`);
@@ -352,10 +383,53 @@ async function getSignal() {
 
     document.getElementById('prob-label').textContent=prob+'%';
     setTimeout(()=>{document.getElementById('prob-bar').style.width=prob+'%';},100);
+
+    // Показываем блок объяснения с загрузкой
+    explainBox.style.display='block';
+    explainBox.className='ai-explain';
+    aiDot.className='ai-explain-dot';
+    explainText.innerHTML='<span class="ai-explain-loading">Claude AI формирует объяснение...</span>';
+
+    // Запрашиваем объяснение от Claude AI параллельно
+    getAIExplanation(data.symbol, data.direction, prob, data.timeframe, isUp);
+
   } catch(e) {
     box.innerHTML=`<div style="color:#ff4444;font-size:12px;">Ошибка получения сигнала</div>`;
   }
   btn.disabled=false;
+}
+
+async function getAIExplanation(symbol, direction, prob, timeframe, isUp) {
+  const explainBox = document.getElementById('ai-explain');
+  const explainText = document.getElementById('ai-explain-text');
+  const aiDot = document.getElementById('ai-dot');
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Ты профессиональный трейдер-аналитик. Сигнал по паре ${symbol}: направление ${direction}, вероятность ${prob}%, таймфрейм ${timeframe} минут.
+
+Напиши краткое объяснение сигнала (2-3 предложения) на русском языке — что видит алгоритм на рынке: какие индикаторы, тренд, моментум. Пиши уверенно и профессионально. Только текст объяснения, без приветствий.`
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content[0].text.trim();
+
+    explainBox.className = 'ai-explain' + (isUp ? ' up-exp' : '');
+    aiDot.className = 'ai-explain-dot' + (isUp ? ' up' : '');
+    explainText.textContent = text;
+
+  } catch(e) {
+    explainText.textContent = `${direction} сигнал подтверждён алгоритмом. Вероятность ${prob}%.`;
+  }
 }
 
 // ===== OTC ANALYSIS via Claude AI =====

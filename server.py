@@ -52,6 +52,18 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS user_signals (
+            id SERIAL PRIMARY KEY,
+            pocket_id TEXT NOT NULL,
+            pair TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            timeframe TEXT NOT NULL,
+            probability INTEGER,
+            result TEXT DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     conn.commit(); cur.close(); conn.close()
     logging.info("✅ База данных инициализирована")
 
@@ -426,7 +438,105 @@ def signal():
 
     timeframe = request.args.get("timeframe", 1)
     symbol, direction, probability = get_signal()
+
+    # Сохраняем сигнал в историю пользователя
+    if pocket_id:
+        try:
+            conn2 = get_db(); cur2 = conn2.cursor()
+            cur2.execute(
+                "INSERT INTO user_signals (pocket_id, pair, direction, timeframe, probability) VALUES (%s, %s, %s, %s, %s)",
+                (pocket_id, symbol, direction, str(timeframe), int(probability))
+            )
+            conn2.commit(); cur2.close(); conn2.close()
+        except Exception as e:
+            logging.error(f"save signal error: {e}")
+
     return jsonify({"symbol": symbol, "direction": direction, "probability": probability, "timeframe": timeframe})
+
+
+# ======================
+# PROFILE ROUTES
+# ======================
+
+@app.route("/api/profile/<pocket_id>")
+def get_profile(pocket_id):
+    try:
+        conn = get_db(); cur = conn.cursor()
+
+        # Получаем данные пользователя
+        cur.execute("SELECT name, pocket_id, created_at FROM users WHERE pocket_id=%s", (pocket_id,))
+        user = cur.fetchone()
+        if not user:
+            cur.close(); conn.close()
+            return jsonify({"ok": False, "error": "Пользователь не найден"}), 404
+
+        # Получаем историю сигналов
+        cur.execute("""
+            SELECT id, pair, direction, timeframe, probability, result, created_at
+            FROM user_signals
+            WHERE pocket_id=%s
+            ORDER BY created_at DESC
+            LIMIT 50
+        """, (pocket_id,))
+        signals = cur.fetchall()
+        cur.close(); conn.close()
+
+        # Считаем статистику
+        rated = [s for s in signals if s["result"] is not None]
+        wins  = len([s for s in rated if s["result"] == "win"])
+        losses = len([s for s in rated if s["result"] == "loss"])
+        winrate = round((wins / len(rated)) * 100) if rated else 0
+
+        signals_list = [{
+            "id": s["id"],
+            "pair": s["pair"],
+            "direction": s["direction"],
+            "timeframe": s["timeframe"],
+            "probability": s["probability"],
+            "result": s["result"],
+            "created_at": str(s["created_at"])
+        } for s in signals]
+
+        return jsonify({
+            "ok": True,
+            "user": {"name": user["name"], "pocket_id": user["pocket_id"], "created_at": str(user["created_at"])},
+            "stats": {"total": len(signals), "wins": wins, "losses": losses, "rated": len(rated), "winrate": winrate},
+            "signals": signals_list
+        })
+
+    except Exception as e:
+        logging.error(f"profile error: {e}")
+        return jsonify({"ok": False, "error": "Ошибка сервера"}), 500
+
+
+@app.route("/api/signal/rate", methods=["PATCH"])
+def rate_signal():
+    data      = request.json
+    signal_id = data.get("signal_id")
+    pocket_id = data.get("pocket_id")
+    result    = data.get("result")  # "win" или "loss"
+
+    if result not in ("win", "loss"):
+        return jsonify({"ok": False, "error": "Неверный результат"}), 400
+
+    try:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute(
+            "UPDATE user_signals SET result=%s WHERE id=%s AND pocket_id=%s AND result IS NULL",
+            (result, signal_id, pocket_id)
+        )
+        conn.commit()
+        updated = cur.rowcount
+        cur.close(); conn.close()
+
+        if updated == 0:
+            return jsonify({"ok": False, "error": "Сигнал не найден или уже оценён"}), 400
+
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        logging.error(f"rate signal error: {e}")
+        return jsonify({"ok": False, "error": "Ошибка сервера"}), 500
 
 
 # ======================
