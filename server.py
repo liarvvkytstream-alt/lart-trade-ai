@@ -74,11 +74,11 @@ init_db()
 # ======================
 
 symbols = [
-    "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD",
-    "EURGBP", "EURJPY", "EURCHF", "EURAUD", "EURCAD",
-    "GBPJPY", "GBPCHF", "GBPAUD", "GBPCAD",
-    "AUDJPY", "AUDCHF", "AUDCAD","CADJPY", "CADCHF",
-    "NZDJPY", "NZDCAD","CHFJPY", "EURNZD", "GBPNZD", "AUDNZD", "NZDCHF"
+    "EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "USD/CAD", "NZD/USD",
+    "EUR/GBP", "EUR/JPY", "EUR/CHF", "EUR/AUD", "EUR/CAD",
+    "GBP/JPY", "GBP/CHF", "GBP/AUD", "GBP/CAD",
+    "AUD/JPY", "AUD/CHF", "AUD/CAD","CAD/JPY", "CAD/CHF",
+    "NZD/JPY", "NZD/CAD","CHF/JPY", "EUR/NZD", "GBP/NZD", "AUD/NZD", "NZD/CHF"
 ]
 # ======================
 # ПОЛУЧЕНИЕ ДАННЫХ
