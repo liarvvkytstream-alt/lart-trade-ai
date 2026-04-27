@@ -361,7 +361,16 @@ async function getSignal() {
 
   try {
     const res=await fetch(`/signal?timeframe=${selectedTF}&pocket_id=${pocket_id}`);
-    if (res.status===403){window.location='login.html';return;}
+    if (res.status===403){
+      const errData = await res.json();
+      if (errData.error === 'limit_reached') {
+        window.location='subscribe.html';
+        return;
+      }
+      window.location='login.html';
+      return;
+    }
+    if (res.status===402){window.location='subscribe.html';return;}
     const data=await res.json();
     const isUp=data.direction.includes('ВВЕРХ');
     const prob=parseInt(data.probability);

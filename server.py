@@ -49,9 +49,20 @@ def init_db():
             name TEXT,
             pocket_id TEXT UNIQUE,
             status TEXT DEFAULT 'pending',
+            signals_used INTEGER DEFAULT 0,
+            subscribed BOOLEAN DEFAULT FALSE,
+            sub_expires_at TIMESTAMP DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # Добавляем колонки если их нет (для существующих таблиц)
+    for col in [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS signals_used INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscribed BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS sub_expires_at TIMESTAMP DEFAULT NULL",
+    ]:
+        try: cur.execute(col)
+        except: pass
     cur.execute("""
         CREATE TABLE IF NOT EXISTS user_signals (
             id SERIAL PRIMARY KEY,
@@ -61,6 +72,16 @@ def init_db():
             timeframe TEXT NOT NULL,
             probability INTEGER,
             result TEXT DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS payments (
+            id SERIAL PRIMARY KEY,
+            pocket_id TEXT NOT NULL,
+            amount TEXT NOT NULL,
+            tx_hash TEXT DEFAULT NULL,
+            status TEXT DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -475,20 +496,40 @@ def admin_reject():
 # SIGNAL ROUTE
 # ======================
 
+FREE_SIGNALS_LIMIT = 20
+USDT_WALLET = "TRRxtesKFFS4V6XVSSmUuwVDq8KxLJR9Ci"
+SUBSCRIPTION_PRICE = 100
+
 @app.route("/signal")
 def signal():
     pocket_id = request.args.get("pocket_id", "")
     if pocket_id:
         conn = get_db(); cur = conn.cursor()
-        cur.execute("SELECT status FROM users WHERE pocket_id=%s", (pocket_id,))
+        cur.execute("SELECT status, signals_used, subscribed, sub_expires_at FROM users WHERE pocket_id=%s", (pocket_id,))
         user = cur.fetchone(); cur.close(); conn.close()
         if not user or user["status"] != "approved":
             return jsonify({"error": "access_denied"}), 403
 
+        # Проверяем подписку
+        from datetime import datetime
+        is_subscribed = user["subscribed"]
+        if user["sub_expires_at"] and user["sub_expires_at"] < datetime.now():
+            is_subscribed = False
+
+        # Проверяем лимит бесплатных сигналов
+        if not is_subscribed and user["signals_used"] >= FREE_SIGNALS_LIMIT:
+            return jsonify({
+                "error": "limit_reached",
+                "signals_used": user["signals_used"],
+                "limit": FREE_SIGNALS_LIMIT,
+                "wallet": USDT_WALLET,
+                "price": SUBSCRIPTION_PRICE
+            }), 402
+
     timeframe = request.args.get("timeframe", 1)
     symbol, direction, probability = get_signal()
 
-    # Сохраняем сигнал в историю пользователя
+    # Сохраняем сигнал и увеличиваем счётчик
     if pocket_id:
         try:
             conn2 = get_db(); cur2 = conn2.cursor()
@@ -496,11 +537,87 @@ def signal():
                 "INSERT INTO user_signals (pocket_id, pair, direction, timeframe, probability) VALUES (%s, %s, %s, %s, %s)",
                 (pocket_id, symbol, direction, str(timeframe), int(probability))
             )
+            cur2.execute(
+                "UPDATE users SET signals_used = signals_used + 1 WHERE pocket_id=%s",
+                (pocket_id,)
+            )
             conn2.commit(); cur2.close(); conn2.close()
         except Exception as e:
             logging.error(f"save signal error: {e}")
 
     return jsonify({"symbol": symbol, "direction": direction, "probability": probability, "timeframe": timeframe})
+
+
+# ======================
+# SUBSCRIPTION ROUTES
+# ======================
+
+@app.route("/api/subscribe/info")
+def subscribe_info():
+    pocket_id = request.args.get("pocket_id", "")
+    conn = get_db(); cur = conn.cursor()
+    cur.execute("SELECT signals_used, subscribed, sub_expires_at FROM users WHERE pocket_id=%s", (pocket_id,))
+    user = cur.fetchone(); cur.close(); conn.close()
+    if not user:
+        return jsonify({"ok": False}), 404
+    return jsonify({
+        "ok": True,
+        "signals_used": user["signals_used"],
+        "limit": FREE_SIGNALS_LIMIT,
+        "subscribed": user["subscribed"],
+        "wallet": USDT_WALLET,
+        "price": SUBSCRIPTION_PRICE
+    })
+
+
+@app.route("/api/subscribe/submit", methods=["POST"])
+def subscribe_submit():
+    """Пользователь отправляет tx hash после оплаты"""
+    data = request.json
+    pocket_id = data.get("pocket_id", "")
+    tx_hash   = data.get("tx_hash", "").strip()
+
+    if not pocket_id or not tx_hash:
+        return jsonify({"ok": False, "error": "Заполните все поля"}), 400
+
+    try:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO payments (pocket_id, amount, tx_hash, status) VALUES (%s, %s, %s, 'pending')",
+            (pocket_id, str(SUBSCRIPTION_PRICE), tx_hash)
+        )
+        conn.commit(); cur.close(); conn.close()
+        return jsonify({"ok": True, "message": "Заявка принята! Подписка будет активирована после проверки."})
+    except Exception as e:
+        logging.error(f"subscribe submit error: {e}")
+        return jsonify({"ok": False, "error": "Ошибка сервера"}), 500
+
+
+@app.route("/api/admin/payments")
+def admin_payments():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+    conn = get_db(); cur = conn.cursor()
+    cur.execute("SELECT * FROM payments ORDER BY created_at DESC")
+    rows = cur.fetchall(); cur.close(); conn.close()
+    payments = [{"id": r["id"], "pocket_id": r["pocket_id"], "amount": r["amount"], "tx_hash": r["tx_hash"], "status": r["status"], "created_at": str(r["created_at"])} for r in rows]
+    return jsonify({"ok": True, "payments": payments})
+
+
+@app.route("/api/admin/activate", methods=["POST"])
+def admin_activate():
+    """Админ вручную активирует подписку после проверки оплаты"""
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+    pocket_id  = request.json.get("pocket_id")
+    payment_id = request.json.get("payment_id")
+    from datetime import datetime, timedelta
+    expires = datetime.now() + timedelta(days=30)
+    conn = get_db(); cur = conn.cursor()
+    cur.execute("UPDATE users SET subscribed=TRUE, sub_expires_at=%s WHERE pocket_id=%s", (expires, pocket_id))
+    cur.execute("UPDATE payments SET status='confirmed' WHERE id=%s", (payment_id,))
+    conn.commit(); cur.close(); conn.close()
+    return jsonify({"ok": True})
 
 
 # ======================
