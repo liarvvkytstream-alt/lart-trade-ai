@@ -619,7 +619,8 @@ if TOKEN:
     def run_bot():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(dp.start_polling(bot))
+        # Отключаем signal handlers — они не работают в не-главном потоке
+        loop.run_until_complete(dp.start_polling(bot, handle_signals=False))
 
     bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
