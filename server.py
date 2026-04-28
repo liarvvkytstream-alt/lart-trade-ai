@@ -33,7 +33,7 @@ ADMIN_ID     = int(os.getenv("ADMIN_ID", "574717871"))
 WEBAPP_URL   = os.getenv("WEBAPP_URL", "https://lart-trade-ai-production.up.railway.app")
 ADMIN_PASS   = os.getenv("ADMIN_PASS", "lart2024admin")
 DATABASE_URL = os.getenv("DATABASE_URL")
-
+ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY")
 # ======================
 # DATABASE
 # ======================
