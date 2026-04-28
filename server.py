@@ -469,9 +469,10 @@ def admin_users():
     if not session.get("admin"):
         return jsonify({"ok": False}), 403
     conn = get_db(); cur = conn.cursor()
-    cur.execute("SELECT id, name, pocket_id, status, created_at FROM users ORDER BY created_at DESC")
+    cur.execute("SELECT id, name, pocket_id, status, subscribed, sub_expires_at, created_at FROM users ORDER BY created_at DESC")
     rows = cur.fetchall(); cur.close(); conn.close()
-    users = [{"id": r["id"], "name": r["name"], "pocket_id": r["pocket_id"], "status": r["status"], "created_at": str(r["created_at"])} for r in rows]
+    from datetime import datetime
+    users = [{"id": r["id"], "name": r["name"], "pocket_id": r["pocket_id"], "status": r["status"], "subscribed": bool(r["subscribed"] and (r["sub_expires_at"] is None or r["sub_expires_at"] > datetime.now())), "created_at": str(r["created_at"])} for r in rows]
     return jsonify({"ok": True, "users": users})
 
 
@@ -620,7 +621,8 @@ def admin_activate():
     expires = datetime.now() + timedelta(days=30)
     conn = get_db(); cur = conn.cursor()
     cur.execute("UPDATE users SET subscribed=TRUE, sub_expires_at=%s WHERE pocket_id=%s", (expires, pocket_id))
-    cur.execute("UPDATE payments SET status='confirmed' WHERE id=%s", (payment_id,))
+    if payment_id:
+        cur.execute("UPDATE payments SET status='confirmed' WHERE id=%s", (payment_id,))
     conn.commit(); cur.close(); conn.close()
     return jsonify({"ok": True})
 

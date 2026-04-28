@@ -68,6 +68,10 @@
   .approve-btn:hover { background:rgba(0,255,136,0.2); }
   .reject-btn  { padding:6px 14px; background:rgba(255,0,0,0.1); border:1px solid rgba(255,0,0,0.3); color:#ff4444; border-radius:8px; cursor:pointer; font-size:12px; transition:all 0.2s; }
   .reject-btn:hover { background:rgba(255,0,0,0.2); }
+
+  .sub-btn { padding:6px 12px; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.35); color:#c9a84c; border-radius:8px; cursor:pointer; font-size:11px; transition:all 0.2s; white-space:nowrap; }
+  .sub-btn:hover { background:rgba(201,168,76,0.22); box-shadow:0 0 10px rgba(201,168,76,0.3); }
+  .sub-active { font-size:11px; color:#00ff88; font-family:'Orbitron',monospace; letter-spacing:1px; }
   .refresh-btn { padding:8px 18px; background:rgba(255,0,0,0.08); border:1px solid rgba(255,0,0,0.2); color:white; border-radius:10px; cursor:pointer; font-size:13px; }
 </style>
 </head>
@@ -115,6 +119,18 @@ async function adminLogin() {
   else document.getElementById('login-error').style.display='block';
 }
 
+async function giveSubscription(pocket_id, name) {
+  if (!confirm(`Дать подписку на 30 дней пользователю ${name}?`)) return;
+  const res = await fetch('/api/admin/activate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({pocket_id, payment_id: null})
+  });
+  const data = await res.json();
+  if (data.ok) { alert('✅ Подписка активирована!'); loadUsers(); }
+  else alert('Ошибка: ' + (data.error || 'неизвестная'));
+}
+
 async function loadUsers() {
   const res=await fetch('/api/admin/users');
   const data=await res.json();
@@ -128,7 +144,15 @@ async function loadUsers() {
   users.forEach(u=>{
     const tr=document.createElement('tr');
     const date=u.created_at?u.created_at.slice(0,16).replace('T',' '):'—';
-    const actions=u.status==='pending'?`<div class="actions"><button class="approve-btn" onclick="approve('${u.pocket_id}')">✓ Одобрить</button><button class="reject-btn" onclick="reject('${u.pocket_id}')">✗ Отклонить</button></div>`:'—';
+    let actions = '';
+    if (u.status === 'pending') {
+      actions = `<div class="actions"><button class="approve-btn" onclick="approve('${u.pocket_id}')">✓ Одобрить</button><button class="reject-btn" onclick="reject('${u.pocket_id}')">✗ Отклонить</button></div>`;
+    } else if (u.status === 'approved') {
+      const subLabel = u.subscribed ? `<span class="sub-active">✓ ACTIVE</span>` : `<button class="sub-btn" onclick="giveSubscription('${u.pocket_id}', '${u.name}')">💎 Дать подписку</button>`;
+      actions = `<div class="actions">${subLabel}</div>`;
+    } else {
+      actions = '—';
+    }
     tr.innerHTML=`<td>${u.name}</td><td style="font-family:monospace">${u.pocket_id}</td><td><span class="badge ${u.status}">${u.status}</span></td><td style="color:rgba(255,255,255,0.4)">${date}</td><td>${actions}</td>`;
     tbody.appendChild(tr);
   });
