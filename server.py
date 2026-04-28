@@ -101,6 +101,17 @@ symbols = [
     "AUD/JPY", "AUD/CHF", "AUD/CAD","CAD/JPY", "CAD/CHF",
     "NZD/JPY", "NZD/CAD","CHF/JPY", "EUR/NZD", "GBP/NZD", "AUD/NZD", "NZD/CHF"
 ]
+# Commodity symbols
+commodity_symbols = [
+    "XAU/USD",    # Gold
+    "XAG/USD",    # Silver
+    "XPD/USD",    # Palladium
+    "XPT/USD",    # Platinum
+    "WTI/USD",    # WTI Crude Oil
+    "BRENT/USD",  # Brent Oil
+    "NATGAS/USD", # Natural Gas
+]
+
 # ======================
 # ПОЛУЧЕНИЕ ДАННЫХ
 # ======================
@@ -411,6 +422,33 @@ def get_signal(timeframe=1):
     return best["symbol"], best["direction"], best["probability"]
 
 
+def get_commodity_signal(symbol, timeframe=3):
+    """Анализирует конкретный инструмент сырья по заданному таймфрейму"""
+    interval_map = {3: "3min", 5: "5min", 30: "30min"}
+    interval = interval_map.get(int(timeframe), "3min")
+    logging.info(f"🏅 Сырьё: {symbol} | TF: {timeframe}мин | Интервал: {interval}")
+
+    df = get_data(symbol, interval)
+    if df is None or len(df) < 30:
+        # Пробуем fallback интервал если нет данных на запрошенном
+        for fallback in ["5min", "15min", "1h"]:
+            if fallback != interval:
+                df = get_data(symbol, fallback)
+                if df is not None and len(df) >= 30:
+                    logging.info(f"⚠️ {symbol}: использован fallback интервал {fallback}")
+                    break
+    if df is None or len(df) < 30:
+        return None, None, None
+
+    try:
+        direction, probability, score = analyze(df)
+        logging.info(f"✅ {symbol}: {direction} {probability}%")
+        return symbol, direction, probability
+    except Exception as e:
+        logging.error(f"commodity analyze error {symbol}: {e}")
+        return None, None, None
+
+
 # ======================
 # AUTH ROUTES
 # ======================
@@ -552,6 +590,46 @@ def signal():
             logging.error(f"save signal error: {e}")
 
     return jsonify({"symbol": symbol, "direction": direction, "probability": probability, "timeframe": timeframe})
+
+
+@app.route("/commodity_signal")
+def commodity_signal():
+    pocket_id = request.args.get("pocket_id", "")
+    symbol    = request.args.get("symbol", "XAU/USD")
+    timeframe = int(request.args.get("timeframe", 3))
+
+    # Access check
+    if pocket_id:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute("SELECT status, signals_used, subscribed, sub_expires_at FROM users WHERE pocket_id=%s", (pocket_id,))
+        user = cur.fetchone(); cur.close(); conn.close()
+        if not user or user["status"] != "approved":
+            return jsonify({"error": "access_denied"}), 403
+        from datetime import datetime
+        is_subscribed = user["subscribed"]
+        if user["sub_expires_at"] and user["sub_expires_at"] < datetime.now():
+            is_subscribed = False
+        if not is_subscribed and user["signals_used"] >= FREE_SIGNALS_LIMIT:
+            return jsonify({"error": "limit_reached", "wallet": USDT_WALLET, "price": SUBSCRIPTION_PRICE}), 402
+
+    sym_out, direction, probability = get_commodity_signal(symbol, timeframe)
+    if sym_out is None:
+        return jsonify({"error": "no_data", "message": "Рынок закрыт или нет данных по этому инструменту"}), 503
+
+    # Save signal
+    if pocket_id:
+        try:
+            conn2 = get_db(); cur2 = conn2.cursor()
+            cur2.execute(
+                "INSERT INTO user_signals (pocket_id, pair, direction, timeframe, probability) VALUES (%s, %s, %s, %s, %s)",
+                (pocket_id, sym_out, direction, str(timeframe), int(probability))
+            )
+            cur2.execute("UPDATE users SET signals_used = signals_used + 1 WHERE pocket_id=%s", (pocket_id,))
+            conn2.commit(); cur2.close(); conn2.close()
+        except Exception as e:
+            logging.error(f"save commodity signal error: {e}")
+
+    return jsonify({"symbol": sym_out, "direction": direction, "probability": probability, "timeframe": timeframe})
 
 
 # ======================

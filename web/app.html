@@ -235,6 +235,34 @@
   .sub-row-val.green { color:#00ff88; }
   .page-title { font-family:'Orbitron',monospace; font-size:12px; font-weight:900; letter-spacing:2px; background:linear-gradient(135deg,#fff,var(--gold-light),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:4px; }
   .page-sub { font-size:9px; color:rgba(255,255,255,0.25); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+
+  /* COMMODITY PAGE */
+  .comm-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+  .comm-card {
+    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+    border-radius:12px; padding:12px 10px; cursor:pointer; transition:all 0.2s;
+    display:flex; flex-direction:column; align-items:center; gap:4px; position:relative;
+  }
+  .comm-card:active { transform:scale(0.96); }
+  .comm-card.active {
+    background:rgba(255,200,0,0.08); border-color:rgba(255,200,0,0.4);
+    box-shadow:0 0 14px rgba(255,200,0,0.15);
+  }
+  .comm-icon { font-size:22px; line-height:1; }
+  .comm-name { font-family:'Orbitron',monospace; font-size:8px; font-weight:700; letter-spacing:1px; color:rgba(255,255,255,0.7); text-transform:uppercase; }
+  .comm-sym { font-size:9px; color:rgba(255,255,255,0.25); }
+  .comm-tf-row { display:flex; gap:8px; margin-bottom:12px; }
+  .comm-tf-btn { flex:1; padding:9px 4px; background:rgba(255,200,0,0.04); border:1px solid rgba(255,200,0,0.12); border-radius:9px; color:rgba(255,255,255,0.3); cursor:pointer; font-family:'Orbitron',monospace; font-size:9px; font-weight:700; letter-spacing:1px; transition:all 0.2s; }
+  .comm-tf-btn.active { background:rgba(255,200,0,0.14); border-color:rgba(255,200,0,0.5); color:#ffc800; box-shadow:0 0 10px rgba(255,200,0,0.15); }
+  .comm-signal-box { min-height:90px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,200,0,0.1); border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px; margin-bottom:12px; }
+  .comm-prob-wrap { margin-bottom:12px; }
+  .comm-prob-header { display:flex; justify-content:space-between; font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .comm-prob-track { height:5px; background:rgba(255,200,0,0.08); border-radius:5px; overflow:hidden; }
+  .comm-prob-fill { height:100%; background:linear-gradient(90deg,#b8860b,#ffc800); border-radius:5px; width:0%; transition:width 1s cubic-bezier(0.16,1,0.3,1); }
+  .comm-get-btn { width:100%; padding:16px; background:linear-gradient(90deg,#8a6000,#ffc800,#8a6000); background-size:200%; border:none; border-radius:14px; color:#000; font-family:'Orbitron',monospace; font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; transition:all 0.3s; box-shadow:0 0 20px rgba(255,200,0,0.2); }
+  .comm-get-btn:hover { background-position:right; box-shadow:0 0 30px rgba(255,200,0,0.4); }
+  .comm-get-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .comm-market-closed { font-size:11px; color:rgba(255,200,0,0.5); text-align:center; padding:8px; }
 </style>
 </head>
 <body>
@@ -325,6 +353,42 @@
 </div>
 
 <!-- BOTTOM NAVBAR -->
+<!-- COMMODITY PAGE -->
+<div class="card page-section" id="card-comm" style="display:none;margin-top:0;">
+  <div class="page-title">Сырьё</div>
+  <div class="page-sub">Товарные рынки</div>
+  <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+  <p style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Выберите инструмент</p>
+  <div class="comm-grid" id="comm-grid">
+    <div class="comm-card active" onclick="selectComm(this,'XAU/USD')"><div class="comm-icon">🥇</div><div class="comm-name">Gold</div><div class="comm-sym">XAU/USD</div></div>
+    <div class="comm-card" onclick="selectComm(this,'XAG/USD')"><div class="comm-icon">🥈</div><div class="comm-name">Silver</div><div class="comm-sym">XAG/USD</div></div>
+    <div class="comm-card" onclick="selectComm(this,'XPT/USD')"><div class="comm-icon">⚪</div><div class="comm-name">Platinum</div><div class="comm-sym">XPT/USD</div></div>
+    <div class="comm-card" onclick="selectComm(this,'XPD/USD')"><div class="comm-icon">🔘</div><div class="comm-name">Palladium</div><div class="comm-sym">XPD/USD</div></div>
+    <div class="comm-card" onclick="selectComm(this,'WTI/USD')"><div class="comm-icon">🛢️</div><div class="comm-name">WTI Oil</div><div class="comm-sym">WTI/USD</div></div>
+    <div class="comm-card" onclick="selectComm(this,'BRENT/USD')"><div class="comm-icon">⛽</div><div class="comm-name">Brent Oil</div><div class="comm-sym">BRENT/USD</div></div>
+    <div class="comm-card" onclick="selectComm(this,'NATGAS/USD')"><div class="comm-icon">🔥</div><div class="comm-name">Nat. Gas</div><div class="comm-sym">NATGAS</div></div>
+  </div>
+
+  <p style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Таймфрейм</p>
+  <div class="comm-tf-row">
+    <button class="comm-tf-btn active" onclick="setCommTF(this,3)">3 МИН</button>
+    <button class="comm-tf-btn" onclick="setCommTF(this,5)">5 МИН</button>
+    <button class="comm-tf-btn" onclick="setCommTF(this,30)">30 МИН</button>
+  </div>
+
+  <div class="comm-signal-box" id="comm-signal-box">
+    <div style="color:rgba(255,255,255,0.2);font-size:12px;letter-spacing:1px;">Выберите инструмент и нажмите кнопку</div>
+  </div>
+
+  <div class="comm-prob-wrap">
+    <div class="comm-prob-header"><span>Вероятность</span><span id="comm-prob-label" style="color:#ffc800;font-family:'Orbitron',monospace;">—</span></div>
+    <div class="comm-prob-track"><div class="comm-prob-fill" id="comm-prob-bar"></div></div>
+  </div>
+
+  <button class="comm-get-btn" id="comm-get-btn" onclick="getCommoditySignal()">🏅 Получить сигнал</button>
+</div>
+
 <nav class="bottom-nav">
   <button class="nav-item active" id="nav-trade" onclick="switchPage('trade')">
     <span class="nav-icon">⚡</span>
@@ -334,6 +398,11 @@
   <button class="nav-item" id="nav-stats" onclick="switchPage('stats')">
     <span class="nav-icon">📊</span>
     <span class="nav-label">Статистика</span>
+  </button>
+  <div class="nav-sep"></div>
+  <button class="nav-item" id="nav-comm" onclick="switchPage('comm')">
+    <span class="nav-icon">🏅</span>
+    <span class="nav-label">Сырьё</span>
   </button>
   <div class="nav-sep"></div>
   <button class="nav-item" id="nav-sub" onclick="switchPage('sub')">
@@ -364,8 +433,10 @@ function switchPage(page) {
   document.getElementById('card-trade').style.display = page==='trade' ? 'block' : 'none';
   document.getElementById('card-stats').style.display = page==='stats' ? 'block' : 'none';
   document.getElementById('card-sub').style.display = page==='sub' ? 'block' : 'none';
-  ['trade','stats','sub'].forEach(p => {
-    document.getElementById('nav-'+p).classList.toggle('active', p===page);
+  document.getElementById('card-comm').style.display = page==='comm' ? 'block' : 'none';
+  ['trade','stats','comm','sub'].forEach(p => {
+    const el = document.getElementById('nav-'+p);
+    if (el) el.classList.toggle('active', p===page);
   });
   if (page==='stats') loadStats();
   if (page==='sub') loadSubInfo();
@@ -606,6 +677,75 @@ async function getAIExplanation(symbol, direction, prob, timeframe, isUp) {
 
 function goSubscribe() { window.location = 'subscribe.html'; }
 function logout(){ window.location='login.html'; }
+
+// ---- COMMODITY ----
+let selectedComm = 'XAU/USD';
+let selectedCommTF = 3;
+
+function selectComm(btn, symbol) {
+  document.querySelectorAll('.comm-card').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedComm = symbol;
+  // Reset signal box
+  document.getElementById('comm-signal-box').innerHTML = '<div style="color:rgba(255,255,255,0.2);font-size:12px;letter-spacing:1px;">Выберите инструмент и нажмите кнопку</div>';
+  document.getElementById('comm-prob-bar').style.width = '0%';
+  document.getElementById('comm-prob-label').textContent = '—';
+}
+
+function setCommTF(btn, tf) {
+  document.querySelectorAll('.comm-tf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedCommTF = tf;
+}
+
+async function getCommoditySignal() {
+  const btn = document.getElementById('comm-get-btn');
+  const box = document.getElementById('comm-signal-box');
+  btn.disabled = true;
+  btn.textContent = '⏳ Анализ...';
+  box.innerHTML = '<div style="color:rgba(255,200,0,0.5);font-size:11px;letter-spacing:1px;animation:pulse 1s infinite;">Анализируем рынок...</div>';
+
+  try {
+    const res = await fetch(`/commodity_signal?pocket_id=${pocket_id}&symbol=${encodeURIComponent(selectedComm)}&timeframe=${selectedCommTF}`);
+
+    if (res.status === 402) {
+      box.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;">Лимит исчерпан — оформите подписку</div>';
+      btn.disabled = false; btn.textContent = '🏅 Получить сигнал';
+      return;
+    }
+    if (res.status === 503) {
+      box.innerHTML = '<div style="color:rgba(255,200,0,0.5);font-size:11px;text-align:center;">⚠️ Рынок закрыт или нет данных<br><span style="font-size:10px;color:rgba(255,255,255,0.2);">Товарные рынки работают пн-пт</span></div>';
+      btn.disabled = false; btn.textContent = '🏅 Получить сигнал';
+      return;
+    }
+
+    const data = await res.json();
+    if (data.error) {
+      box.innerHTML = `<div style="color:var(--red);font-size:12px;">${data.message || data.error}</div>`;
+      btn.disabled = false; btn.textContent = '🏅 Получить сигнал';
+      return;
+    }
+
+    const isUp = data.direction.includes('ВВЕРХ');
+    const prob = data.probability;
+    const color = isUp ? '#00ff88' : '#ff4444';
+    const arrow = isUp ? '▲' : '▼';
+
+    box.innerHTML = `
+      <div style="font-family:'Orbitron',monospace;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:6px;">${data.symbol} · ${data.timeframe} МИН</div>
+      <div style="font-family:'Orbitron',monospace;font-size:32px;font-weight:900;color:${color};text-shadow:0 0 20px ${color}88;">${arrow} ${data.direction}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;letter-spacing:1px;">ТОЧНОСТЬ ${prob}%</div>`;
+
+    document.getElementById('comm-prob-label').textContent = prob + '%';
+    setTimeout(() => { document.getElementById('comm-prob-bar').style.width = prob + '%'; }, 100);
+
+  } catch(e) {
+    box.innerHTML = '<div style="color:var(--red);font-size:12px;">Ошибка соединения</div>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🏅 Получить сигнал';
+}
 </script>
 </body>
 </html>
