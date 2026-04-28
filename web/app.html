@@ -231,26 +231,18 @@
       <!-- заполняется JS -->
     </div>
 
-    <!-- Upload zone -->
-    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('otc-file').click()">
-      <input type="file" id="otc-file" accept="image/*" onchange="onFileSelected(event)">
-      <img class="upload-preview" id="upload-preview" alt="">
-      <div class="upload-icon" id="upload-icon">📷</div>
-      <div class="upload-text" id="upload-text">Загрузи скриншот графика OTC с PocketOption</div>
-      <div class="upload-btn-fake">ВЫБРАТЬ ФАЙЛ</div>
+    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+    <div class="signal-box" id="otc-signal-box">
+      <div style="color:rgba(255,255,255,0.25);font-size:12px;letter-spacing:1px;">Нажмите кнопку для получения OTC сигнала</div>
     </div>
 
-    <!-- OTC Result -->
-    <div class="otc-result" id="otc-result">
-      <div class="otc-result-header">
-        <div class="otc-result-dot" id="otc-dot"></div>
-        <div class="otc-result-label">Claude AI анализ</div>
-      </div>
-      <div class="otc-direction" id="otc-direction"></div>
-      <div class="otc-explanation" id="otc-explanation"></div>
+    <div class="prob-wrap">
+      <div class="prob-header"><span>Вероятность</span><span class="prob-val-label" id="otc-prob-label">—</span></div>
+      <div class="prob-track"><div class="prob-fill" id="otc-prob-bar"></div></div>
     </div>
 
-    <button class="get-btn" id="otc-btn" onclick="analyzeOTC()">🤖 Анализировать через AI</button>
+    <button class="get-btn" id="otc-btn" onclick="getOTCSignal()">⚡ Получить OTC сигнал</button>
   </div>
 
   <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;"><a href="profile.html" style="font-size:11px;color:rgba(255,255,255,0.35);text-decoration:none;">👤 Мой профиль</a><span style="color:rgba(255,255,255,0.15)">|</span><div class="logout" onclick="logout()" style="margin:0;">Выйти</div></div>
@@ -298,18 +290,7 @@ function setTF(btn, tf) {
   btn.classList.add('active'); selectedTF=tf;
 }
 
-function onFileSelected(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  uploadedFile = file;
-  const preview = document.getElementById('upload-preview');
-  const icon = document.getElementById('upload-icon');
-  const text = document.getElementById('upload-text');
-  preview.src = URL.createObjectURL(file);
-  preview.style.display = 'block';
-  icon.style.display = 'none';
-  text.textContent = file.name;
-}
+
 
 function playAlert(type) {
   try {
@@ -442,103 +423,45 @@ async function getAIExplanation(symbol, direction, prob, timeframe, isUp) {
 }
 
 // ===== OTC ANALYSIS via Claude AI =====
-async function analyzeOTC() {
-  if (!uploadedFile) {
-    alert('Сначала загрузи скриншот графика!');
-    return;
-  }
-
+async function getOTCSignal() {
   const btn = document.getElementById('otc-btn');
-  const result = document.getElementById('otc-result');
+  const box = document.getElementById('otc-signal-box');
   btn.disabled = true;
-  btn.textContent = '🔄 Claude AI анализирует...';
-  result.style.display = 'none';
+  box.innerHTML = `<div class="loading-radar"><div class="radar-mini"></div><div class="loading-text">AI анализирует рынок...</div></div>`;
+  document.getElementById('otc-prob-label').textContent = '—';
+  document.getElementById('otc-prob-bar').style.width = '0%';
 
   try {
-    // Конвертируем файл в base64
-    const base64 = await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.readAsDataURL(uploadedFile);
-    });
+    const res = await fetch(`/signal?timeframe=${selectedTF}&pocket_id=${pocket_id}`);
+    if (res.status === 403) { window.location = 'login.html'; return; }
+    if (res.status === 402) { window.location = 'subscribe.html'; return; }
+    const data = await res.json();
+    const isUp = data.direction.includes('ВВЕРХ');
+    const prob = parseInt(data.probability);
 
-    const mediaType = uploadedFile.type || 'image/jpeg';
-
-    // Отправляем в Claude API
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType, data: base64 }
-            },
-            {
-              type: 'text',
-              text: `Ты профессиональный трейдер. Анализируй этот скриншот графика OTC пары ${selectedOTCPair} с PocketOption.
-
-Определи:
-1. Направление следующего движения: ВВЕРХ или ВНИЗ
-2. Вероятность в процентах (от 55% до 92%)
-3. Краткое объяснение (2-3 предложения) почему именно такой сигнал — какие паттерны свечей, уровни, индикаторы видишь
-
-Ответь СТРОГО в формате JSON:
-{
-  "direction": "ВВЕРХ" или "ВНИЗ",
-  "probability": число от 55 до 92,
-  "explanation": "краткое объяснение на русском"
-}
-
-Только JSON, никакого другого текста.`
-            }
-          ]
-        }]
-      })
-    });
-
-    const data = await response.json();
-    const text = data.content[0].text.trim();
-    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-
-    const isUp = parsed.direction === 'ВВЕРХ';
-    const prob = parseInt(parsed.probability);
-
-    // Flash
     document.getElementById('flash').classList.add('active');
-    setTimeout(()=>document.getElementById('flash').classList.remove('active'),600);
+    setTimeout(() => document.getElementById('flash').classList.remove('active'), 600);
 
-    if (prob >= 80) { playAlert('strong'); showToast(prob, selectedOTCPair); }
+    if (prob >= 80) { playAlert('strong'); showToast(prob, selectedOTCPair + ' OTC'); }
     else { playAlert('normal'); }
 
-    // Show result
-    result.style.display = 'block';
-    result.className = 'otc-result ' + (isUp ? 'up-result' : 'down-result');
+    // Показываем с припиской OTC
+    box.innerHTML = `
+      <div class="pair-val">${selectedOTCPair}</div>
+      <div class="dir ${isUp ? 'up' : 'down'}">${isUp ? 'ВВЕРХ' : 'ВНИЗ'}</div>
+      <div class="arrow" style="color:${isUp ? '#00ff88' : '#ff0000'}">${isUp ? '▲' : '▼'}</div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val">OTC</div><div class="stat-lbl">Режим</div></div>
+        <div class="stat"><div class="stat-val">${prob}%</div><div class="stat-lbl">Точность</div></div>
+      </div>`;
 
-    const dot = document.getElementById('otc-dot');
-    dot.className = 'otc-result-dot' + (isUp ? '' : ' down');
-
-    const dirEl = document.getElementById('otc-direction');
-    dirEl.textContent = (isUp ? '▲ ' : '▼ ') + parsed.direction + ' ' + prob + '%';
-    dirEl.style.color = isUp ? '#00ff88' : '#ff0000';
-
-    const expEl = document.getElementById('otc-explanation');
-    expEl.textContent = parsed.explanation;
-    expEl.className = 'otc-explanation' + (isUp ? ' up-exp' : '');
+    document.getElementById('otc-prob-label').textContent = prob + '%';
+    setTimeout(() => { document.getElementById('otc-prob-bar').style.width = prob + '%'; }, 100);
 
   } catch(e) {
-    result.style.display = 'block';
-    result.className = 'otc-result';
-    document.getElementById('otc-direction').textContent = 'Ошибка анализа';
-    document.getElementById('otc-explanation').textContent = 'Не удалось проанализировать скриншот. Попробуйте снова.';
+    box.innerHTML = `<div style="color:#ff4444;font-size:12px;">Ошибка получения сигнала</div>`;
   }
-
   btn.disabled = false;
-  btn.textContent = '🤖 Анализировать через AI';
 }
 
 function logout(){ window.location='login.html'; }
