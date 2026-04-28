@@ -263,6 +263,21 @@
   .comm-get-btn:hover { background-position:right; box-shadow:0 0 30px rgba(255,200,0,0.4); }
   .comm-get-btn:disabled { opacity:0.5; cursor:not-allowed; }
   .comm-market-closed { font-size:11px; color:rgba(255,200,0,0.5); text-align:center; padding:8px; }
+
+  /* MARKET SWITCHER on trade card */
+  .market-switcher { display:flex; gap:0; margin-bottom:16px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,0,0,0.2); }
+  .mkt-btn { flex:1; padding:11px 8px; background:transparent; border:none; cursor:pointer; font-family:'Orbitron',monospace; font-size:9px; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,0.3); text-transform:uppercase; transition:all 0.25s; position:relative; }
+  .mkt-btn + .mkt-btn { border-left:1px solid rgba(255,0,0,0.15); }
+  .mkt-btn.active-forex { background:linear-gradient(135deg,rgba(255,0,0,0.18),rgba(139,0,0,0.1)); color:white; text-shadow:0 0 8px rgba(255,0,0,0.5); }
+  .mkt-btn.active-comm { background:linear-gradient(135deg,rgba(255,200,0,0.15),rgba(180,130,0,0.08)); color:#ffc800; text-shadow:0 0 8px rgba(255,200,0,0.4); }
+  .mkt-btn-icon { display:block; font-size:16px; margin-bottom:3px; }
+
+  /* IMPROVED NAVBAR */
+  .bottom-nav { background:rgba(6,0,0,0.98) !important; border-top:1px solid rgba(255,0,0,0.3) !important; }
+  .nav-item { background:rgba(255,255,255,0.02) !important; margin:6px 3px; border-radius:10px; height:52px; }
+  .nav-item.active { background:rgba(255,0,0,0.1) !important; border:1px solid rgba(255,0,0,0.25) !important; }
+  .nav-icon { filter:none !important; opacity:0.5; }
+  .nav-item.active .nav-icon { opacity:1 !important; }
 </style>
 </head>
 <body>
@@ -288,6 +303,19 @@
   <h1>LART Trade AI</h1>
 
   <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+  <!-- MARKET SWITCHER -->
+  <div class="market-switcher">
+    <button class="mkt-btn active-forex" id="mkt-forex" onclick="switchMarket('forex')">
+      <span class="mkt-btn-icon">💱</span>Forex
+    </button>
+    <button class="mkt-btn" id="mkt-comm" onclick="switchMarket('comm')">
+      <span class="mkt-btn-icon">🏅</span>Сырьё
+    </button>
+  </div>
+
+  <!-- FOREX SECTION -->
+  <div id="trade-forex">
     <p class="tf-label">Выберите таймфрейм</p>
     <div class="tf-grid">
       <button class="tf-btn active" onclick="setTF(this,1)">1 МИН</button>
@@ -307,6 +335,36 @@
       <div class="ai-explain-text" id="ai-explain-text"></div>
     </div>
     <button class="get-btn" id="get-btn" onclick="getSignal()">⚡ Получить сигнал</button>
+  </div>
+
+  <!-- COMMODITY INLINE SECTION -->
+  <div id="trade-comm" style="display:none;">
+    <p style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Инструмент</p>
+    <div class="comm-grid" id="comm-grid-inline">
+      <div class="comm-card active" onclick="selectComm(this,'XAU/USD')"><div class="comm-icon">🥇</div><div class="comm-name">Gold</div><div class="comm-sym">XAU/USD</div></div>
+      <div class="comm-card" onclick="selectComm(this,'XAG/USD')"><div class="comm-icon">🥈</div><div class="comm-name">Silver</div><div class="comm-sym">XAG/USD</div></div>
+      <div class="comm-card" onclick="selectComm(this,'XPT/USD')"><div class="comm-icon">⚪</div><div class="comm-name">Platinum</div><div class="comm-sym">XPT/USD</div></div>
+      <div class="comm-card" onclick="selectComm(this,'XPD/USD')"><div class="comm-icon">🔘</div><div class="comm-name">Palladium</div><div class="comm-sym">XPD/USD</div></div>
+      <div class="comm-card" onclick="selectComm(this,'WTI/USD')"><div class="comm-icon">🛢️</div><div class="comm-name">WTI Oil</div><div class="comm-sym">WTI/USD</div></div>
+      <div class="comm-card" onclick="selectComm(this,'BRENT/USD')"><div class="comm-icon">⛽</div><div class="comm-name">Brent Oil</div><div class="comm-sym">BRENT/USD</div></div>
+      <div class="comm-card" onclick="selectComm(this,'NATGAS/USD')"><div class="comm-icon">🔥</div><div class="comm-name">Nat. Gas</div><div class="comm-sym">NATGAS</div></div>
+    </div>
+    <p style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Таймфрейм</p>
+    <div class="comm-tf-row">
+      <button class="comm-tf-btn active" onclick="setCommTF(this,3)">3 МИН</button>
+      <button class="comm-tf-btn" onclick="setCommTF(this,5)">5 МИН</button>
+      <button class="comm-tf-btn" onclick="setCommTF(this,30)">30 МИН</button>
+    </div>
+    <div class="comm-signal-box" id="comm-signal-box">
+      <div style="color:rgba(255,255,255,0.2);font-size:12px;letter-spacing:1px;">Выберите инструмент и нажмите кнопку</div>
+    </div>
+    <div class="comm-prob-wrap">
+      <div class="comm-prob-header"><span>Вероятность</span><span id="comm-prob-label" style="color:#ffc800;font-family:'Orbitron',monospace;">—</span></div>
+      <div class="comm-prob-track"><div class="comm-prob-fill" id="comm-prob-bar"></div></div>
+    </div>
+    <button class="comm-get-btn" id="comm-get-btn" onclick="getCommoditySignal()">🏅 Получить сигнал</button>
+  </div>
+
   <div style="text-align:center;margin-top:10px;"><span class="logout" onclick="logout()">Выйти</span></div>
 </div>
 
@@ -400,11 +458,6 @@
     <span class="nav-label">Статистика</span>
   </button>
   <div class="nav-sep"></div>
-  <button class="nav-item" id="nav-comm" onclick="switchPage('comm')">
-    <span class="nav-icon">🏅</span>
-    <span class="nav-label">Сырьё</span>
-  </button>
-  <div class="nav-sep"></div>
   <button class="nav-item" id="nav-sub" onclick="switchPage('sub')">
     <span class="nav-icon">💎</span>
     <span class="nav-label">Подписка</span>
@@ -433,13 +486,19 @@ function switchPage(page) {
   document.getElementById('card-trade').style.display = page==='trade' ? 'block' : 'none';
   document.getElementById('card-stats').style.display = page==='stats' ? 'block' : 'none';
   document.getElementById('card-sub').style.display = page==='sub' ? 'block' : 'none';
-  document.getElementById('card-comm').style.display = page==='comm' ? 'block' : 'none';
-  ['trade','stats','comm','sub'].forEach(p => {
+  ['trade','stats','sub'].forEach(p => {
     const el = document.getElementById('nav-'+p);
     if (el) el.classList.toggle('active', p===page);
   });
   if (page==='stats') loadStats();
   if (page==='sub') loadSubInfo();
+}
+
+function switchMarket(market) {
+  document.getElementById('trade-forex').style.display = market==='forex' ? 'block' : 'none';
+  document.getElementById('trade-comm').style.display = market==='comm' ? 'block' : 'none';
+  document.getElementById('mkt-forex').className = 'mkt-btn' + (market==='forex' ? ' active-forex' : '');
+  document.getElementById('mkt-comm').className = 'mkt-btn' + (market==='comm' ? ' active-comm' : '');
 }
 
 async function loadStats() {
@@ -714,7 +773,14 @@ async function getCommoditySignal() {
       return;
     }
     if (res.status === 503) {
-      box.innerHTML = '<div style="color:rgba(255,200,0,0.5);font-size:11px;text-align:center;">⚠️ Рынок закрыт или нет данных<br><span style="font-size:10px;color:rgba(255,255,255,0.2);">Товарные рынки работают пн-пт</span></div>';
+      box.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0;">
+          <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,200,0,0.06);border:1px solid rgba(255,200,0,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;">🔒</div>
+          <div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:2px;color:rgba(255,200,0,0.7);text-transform:uppercase;">Рынок закрыт</div>
+          <div style="width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,200,0,0.4),transparent);"></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;line-height:1.6;letter-spacing:0.5px;">Товарные рынки работают<br><span style="color:rgba(255,200,0,0.5);font-family:'Orbitron',monospace;font-size:10px;">ПН — ПТ · 01:00 – 23:59 МСК</span></div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.15);letter-spacing:1px;">Ожидайте открытия торгов</div>
+        </div>`;
       btn.disabled = false; btn.textContent = '🏅 Получить сигнал';
       return;
     }
