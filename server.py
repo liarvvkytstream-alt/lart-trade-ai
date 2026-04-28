@@ -566,11 +566,17 @@ def subscribe_info():
     user = cur.fetchone(); cur.close(); conn.close()
     if not user:
         return jsonify({"ok": False}), 404
+    from datetime import datetime
+    is_subscribed = bool(user["subscribed"])
+    expires = user["sub_expires_at"]
+    if expires and expires < datetime.now():
+        is_subscribed = False
     return jsonify({
         "ok": True,
         "signals_used": user["signals_used"],
         "limit": FREE_SIGNALS_LIMIT,
-        "subscribed": user["subscribed"],
+        "subscribed": is_subscribed,
+        "sub_expires_at": str(expires) if expires else None,
         "wallet": USDT_WALLET,
         "price": SUBSCRIPTION_PRICE
     })
