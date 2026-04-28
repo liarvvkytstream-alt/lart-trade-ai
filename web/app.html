@@ -9,7 +9,7 @@
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   :root { --red:#ff0000; --red-dim:#8a0000; --gold:#c9a84c; --gold-light:#f0d080; }
 
-  body { background:#050000; font-family:'Rajdhani',sans-serif; color:white; display:flex; justify-content:center; align-items:center; min-height:100vh; min-height:-webkit-fill-available; overflow-x:hidden; padding:20px 0; }
+  body { background:#050000; font-family:'Rajdhani',sans-serif; color:white; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:100vh; min-height:-webkit-fill-available; overflow-x:hidden; padding:20px 16px 90px; }
   .bg-layer { position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(120,0,0,0.25) 0%, transparent 70%), #050000; }
   .grid-lines { position:fixed; inset:0; z-index:0; background-image:linear-gradient(rgba(255,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,0,0.04) 1px, transparent 1px); background-size:40px 40px; animation:gridMove 20s linear infinite; }
   @keyframes gridMove { to { transform:translateY(40px); } }
@@ -133,7 +133,7 @@
   .logout { margin-top:12px; font-size:11px; color:rgba(255,255,255,0.2); cursor:pointer; text-decoration:underline; }
 
   /* BOTTOM NAVBAR */
-  body { padding-bottom: 82px !important; }
+  /* navbar height compensated in body padding above */
   .bottom-nav {
     position:fixed; bottom:0; left:0; right:0; z-index:50;
     background:rgba(4,0,0,0.97);
