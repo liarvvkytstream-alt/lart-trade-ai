@@ -130,33 +130,93 @@
   .get-btn:active { transform:scale(0.98); }
   .get-btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-  /* OTC MODE */
-  .otc-pair-label { font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px; text-align:left; }
-  .otc-pairs-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; max-height:160px; overflow-y:auto; }
-  .otc-pair-btn { padding:8px 6px; background:rgba(255,0,0,0.04); border:1px solid rgba(255,0,0,0.12); border-radius:8px; color:rgba(255,255,255,0.45); cursor:pointer; font-size:11px; font-weight:600; transition:all 0.2s; text-align:center; }
-  .otc-pair-btn.active { background:rgba(255,0,0,0.15); border-color:rgba(255,0,0,0.5); color:white; }
-
-  .upload-zone { border:1.5px dashed rgba(255,0,0,0.25); border-radius:14px; padding:20px 16px; margin-bottom:12px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; }
-  .upload-zone:hover { border-color:rgba(255,0,0,0.5); background:rgba(255,0,0,0.04); }
-  .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; }
-  .upload-icon { font-size:24px; margin-bottom:6px; opacity:0.5; }
-  .upload-text { font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:8px; }
-  .upload-btn-fake { background:rgba(255,0,0,0.15); border:1px solid rgba(255,0,0,0.3); color:white; border-radius:8px; padding:7px 16px; font-size:11px; font-family:'Orbitron',monospace; letter-spacing:1px; display:inline-block; }
-  .upload-preview { width:100%; border-radius:10px; margin-bottom:10px; max-height:120px; object-fit:cover; display:none; }
-
-  /* OTC Result */
-  .otc-result { background:rgba(0,0,0,0.4); border:1px solid rgba(255,0,0,0.15); border-radius:14px; padding:14px; margin-bottom:10px; display:none; }
-  .otc-result.up-result { border-color:rgba(0,255,136,0.3); }
-  .otc-result.down-result { border-color:rgba(255,0,0,0.4); }
-  .otc-result-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-  .otc-result-dot { width:7px; height:7px; border-radius:50%; background:#00ff88; }
-  .otc-result-dot.down { background:var(--red); }
-  .otc-result-label { font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1.5px; }
-  .otc-direction { font-family:'Orbitron',monospace; font-size:22px; font-weight:900; margin-bottom:4px; }
-  .otc-explanation { font-size:12px; color:rgba(255,255,255,0.55); line-height:1.7; background:rgba(255,255,255,0.03); border-radius:8px; padding:10px; margin-top:8px; border-left:2px solid rgba(255,0,0,0.3); text-align:left; }
-  .otc-explanation.up-exp { border-left-color:rgba(0,255,136,0.4); }
-
   .logout { margin-top:12px; font-size:11px; color:rgba(255,255,255,0.2); cursor:pointer; text-decoration:underline; }
+
+  /* BOTTOM NAVBAR */
+  body { padding-bottom: 82px !important; }
+  .bottom-nav {
+    position:fixed; bottom:0; left:0; right:0; z-index:50;
+    background:rgba(4,0,0,0.97);
+    border-top:1px solid rgba(255,0,0,0.35);
+    backdrop-filter:blur(30px);
+    display:flex; align-items:stretch; height:68px;
+    box-shadow:0 -4px 30px rgba(255,0,0,0.12), 0 -1px 0 rgba(255,0,0,0.08);
+  }
+  .bottom-nav::before {
+    content:''; position:absolute; top:0; left:5%; right:5%; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,0,0,0.6) 30%, rgba(255,0,0,0.8) 50%, rgba(255,0,0,0.6) 70%, transparent);
+    box-shadow:0 0 12px rgba(255,0,0,0.5);
+  }
+  .nav-item {
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; cursor:pointer; border:none; background:transparent; color:inherit;
+    padding:8px 4px 10px; position:relative; transition:all 0.25s;
+  }
+  .nav-item::after {
+    content:''; position:absolute; bottom:0; left:15%; right:15%; height:0px;
+    background:linear-gradient(90deg, transparent, var(--red), transparent);
+    box-shadow:0 0 10px rgba(255,0,0,0.8);
+    border-radius:2px 2px 0 0; opacity:0; transition:all 0.25s;
+  }
+  .nav-item.active::after { height:2px; opacity:1; }
+  .nav-item.active { background:rgba(255,0,0,0.05); }
+  .nav-item:active { transform:scale(0.9); }
+  .nav-icon {
+    font-size:20px; line-height:1;
+    opacity:0.35; transition:all 0.25s;
+    filter:grayscale(1);
+  }
+  .nav-item.active .nav-icon {
+    opacity:1; filter:none;
+    filter:drop-shadow(0 0 8px rgba(255,0,0,0.7));
+  }
+  .nav-label {
+    font-family:'Orbitron',monospace; font-size:7px; letter-spacing:1.5px;
+    color:rgba(255,255,255,0.22); text-transform:uppercase; transition:color 0.25s;
+  }
+  .nav-item.active .nav-label { color:var(--red); text-shadow:0 0 8px rgba(255,0,0,0.5); }
+  .nav-sep { width:1px; background:linear-gradient(180deg,transparent,rgba(255,0,0,0.2),transparent); align-self:stretch; margin:12px 0; }
+  .nav-badge {
+    position:absolute; top:7px; right:calc(50% - 18px);
+    background:linear-gradient(135deg,var(--red),#cc0000);
+    color:white; font-family:'Orbitron',monospace; font-size:7px; font-weight:700;
+    border-radius:8px; padding:2px 5px; min-width:16px; text-align:center;
+    box-shadow:0 0 8px rgba(255,0,0,0.6);
+  }
+
+  /* STATS PAGE */
+  .page-section { display:none; }
+  .page-section.active { display:block; }
+  .stat-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .stat-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:14px; text-align:center; }
+  .stat-box-val { font-family:'Orbitron',monospace; font-size:22px; font-weight:900; }
+  .stat-box-val.green { color:#00ff88; text-shadow:0 0 12px rgba(0,255,136,0.4); }
+  .stat-box-val.red { color:var(--red); text-shadow:0 0 12px rgba(255,0,0,0.4); }
+  .stat-box-val.gold { color:var(--gold); }
+  .stat-box-lbl { font-size:9px; color:rgba(255,255,255,0.28); text-transform:uppercase; letter-spacing:1px; margin-top:3px; }
+  .wr-wrap { background:rgba(255,255,255,0.03); border:1px solid rgba(255,0,0,0.1); border-radius:12px; padding:14px; margin-bottom:10px; }
+  .wr-header { display:flex; justify-content:space-between; font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+  .wr-val { font-family:'Orbitron',monospace; color:#00ff88; }
+  .wr-track { height:6px; background:rgba(255,0,0,0.08); border-radius:6px; overflow:hidden; }
+  .wr-fill { height:100%; background:linear-gradient(90deg,#00aa55,#00ff88); border-radius:6px; transition:width 1.2s cubic-bezier(0.16,1,0.3,1); width:0%; }
+
+  /* SUBSCRIBE PAGE */
+  .sub-hero { border-radius:16px; padding:20px; margin-bottom:12px; text-align:center; position:relative; overflow:hidden; }
+  .sub-hero.active-sub { background:linear-gradient(135deg,rgba(0,255,136,0.07) 0%,rgba(0,180,90,0.04) 100%); border:1px solid rgba(0,255,136,0.2); }
+  .sub-hero.no-sub { background:linear-gradient(135deg,rgba(255,0,0,0.07) 0%,rgba(139,0,0,0.04) 100%); border:1px solid rgba(255,0,0,0.18); }
+  .sub-hero::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent); }
+  .sub-big { font-family:'Orbitron',monospace; font-size:38px; font-weight:900; line-height:1; }
+  .sub-big.green { color:#00ff88; text-shadow:0 0 20px rgba(0,255,136,0.5); }
+  .sub-big.red { color:var(--red); text-shadow:0 0 20px rgba(255,0,0,0.5); }
+  .sub-big-lbl { font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1.5px; margin-top:6px; }
+  .sub-rows { background:rgba(255,255,255,0.02); border:1px solid rgba(255,0,0,0.1); border-radius:12px; padding:4px 14px; margin-bottom:12px; }
+  .sub-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; }
+  .sub-row:last-child { border-bottom:none; }
+  .sub-row-lbl { color:rgba(255,255,255,0.35); }
+  .sub-row-val { font-family:'Orbitron',monospace; font-size:11px; color:white; }
+  .sub-row-val.green { color:#00ff88; }
+  .page-title { font-family:'Orbitron',monospace; font-size:12px; font-weight:900; letter-spacing:2px; background:linear-gradient(135deg,#fff,var(--gold-light),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:4px; }
+  .page-sub { font-size:9px; color:rgba(255,255,255,0.25); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
 </style>
 </head>
 <body>
@@ -177,15 +237,11 @@
   <div class="toast-bar"><div class="toast-bar-fill" id="toast-bar-fill"></div></div>
 </div>
 
-<div class="card">
+<div class="card" id="card-trade">
   <div class="logo-wrap"><div class="logo-glow"></div><div class="logo-ring"></div><img src="logo.png" class="logo" alt="LART"></div>
   <h1>LART Trade AI</h1>
 
-
-
   <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
-
-
     <p class="tf-label">Выберите таймфрейм</p>
     <div class="tf-grid">
       <button class="tf-btn active" onclick="setTF(this,1)">1 МИН</button>
@@ -193,66 +249,158 @@
       <button class="tf-btn" onclick="setTF(this,5)">5 МИН</button>
       <button class="tf-btn" onclick="setTF(this,30)">30 МИН</button>
     </div>
-
     <div class="signal-box" id="signal-box">
       <div style="color:rgba(255,255,255,0.25);font-size:12px;letter-spacing:1px;">Нажмите кнопку для получения сигнала</div>
     </div>
-
     <div class="prob-wrap">
       <div class="prob-header"><span>Вероятность</span><span class="prob-val-label" id="prob-label">—</span></div>
       <div class="prob-track"><div class="prob-fill" id="prob-bar"></div></div>
     </div>
-
-    <!-- AI Explanation -->
     <div class="ai-explain" id="ai-explain">
-      <div class="ai-explain-header">
-        <div class="ai-explain-dot" id="ai-dot"></div>
-        <div class="ai-explain-title">Анализ AI</div>
-      </div>
+      <div class="ai-explain-header"><div class="ai-explain-dot" id="ai-dot"></div><div class="ai-explain-title">Анализ AI</div></div>
       <div class="ai-explain-text" id="ai-explain-text"></div>
     </div>
-
     <button class="get-btn" id="get-btn" onclick="getSignal()">⚡ Получить сигнал</button>
-  </div>
-
-  <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;"><a href="profile.html" style="font-size:11px;color:rgba(255,255,255,0.35);text-decoration:none;">👤 Мой профиль</a><span style="color:rgba(255,255,255,0.15)">|</span><div class="logout" onclick="logout()" style="margin:0;">Выйти</div></div>
+  <div style="text-align:center;margin-top:10px;"><span class="logout" onclick="logout()">Выйти</span></div>
 </div>
+
+<!-- STATS PAGE -->
+<div class="card page-section" id="card-stats" style="display:none;">
+  <div class="page-title">Статистика</div>
+  <div class="page-sub">Торговые результаты</div>
+  <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+  <div class="stat-grid2">
+    <div class="stat-box"><div class="stat-box-val green" id="st-wins">—</div><div class="stat-box-lbl">Побед</div></div>
+    <div class="stat-box"><div class="stat-box-val red" id="st-losses">—</div><div class="stat-box-lbl">Потерь</div></div>
+    <div class="stat-box"><div class="stat-box-val gold" id="st-total">—</div><div class="stat-box-lbl">Всего</div></div>
+    <div class="stat-box"><div class="stat-box-val" style="color:rgba(255,255,255,0.5)" id="st-rated">—</div><div class="stat-box-lbl">Оценено</div></div>
+  </div>
+  <div class="wr-wrap">
+    <div class="wr-header"><span>Винрейт</span><span class="wr-val" id="st-wr-val">—</span></div>
+    <div class="wr-track"><div class="wr-fill" id="st-wr-bar"></div></div>
+  </div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.18);text-align:center;">Оценивайте сигналы в профиле для точной статистики</div>
+</div>
+
+<!-- SUBSCRIBE PAGE -->
+<div class="card page-section" id="card-sub" style="display:none;">
+  <div class="page-title">Подписка</div>
+  <div class="page-sub">Статус доступа</div>
+  <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+  <div id="sub-hero-box" class="sub-hero no-sub">
+    <div class="sub-big red" id="sub-big-num">—</div>
+    <div class="sub-big-lbl" id="sub-big-lbl">Загрузка...</div>
+  </div>
+  <div class="sub-rows">
+    <div class="sub-row"><span class="sub-row-lbl">Бесплатных сигналов</span><span class="sub-row-val" id="sub-limit">—</span></div>
+    <div class="sub-row"><span class="sub-row-lbl">Использовано</span><span class="sub-row-val" id="sub-used">—</span></div>
+    <div class="sub-row"><span class="sub-row-lbl">Стоимость</span><span class="sub-row-val green">100 USDT TRC20</span></div>
+  </div>
+  <div id="sub-btn-wrap"></div>
+</div>
+
+<!-- BOTTOM NAVBAR -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-trade" onclick="switchPage('trade')">
+    <span class="nav-icon">⚡</span>
+    <span class="nav-label">Торговля</span>
+  </button>
+  <div class="nav-sep"></div>
+  <button class="nav-item" id="nav-stats" onclick="switchPage('stats')">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Статистика</span>
+  </button>
+  <div class="nav-sep"></div>
+  <button class="nav-item" id="nav-sub" onclick="switchPage('sub')">
+    <span class="nav-icon">💎</span>
+    <span class="nav-label">Подписка</span>
+    <span class="nav-badge" id="nav-badge" style="display:none;"></span>
+  </button>
+</nav>
 
 <script>
 const pocket_id = localStorage.getItem('pocket_id');
 if (!pocket_id) window.location='login.html';
 
 let selectedTF = 1;
-let selectedOTCPair = 'EUR/USD OTC';
 let toastTimer = null;
-let uploadedFile = null;
 
-const otcPairs = [
-  'EUR/USD OTC','GBP/USD OTC','USD/JPY OTC','AUD/USD OTC',
-  'USD/CAD OTC','USD/CHF OTC','EUR/JPY OTC','GBP/JPY OTC',
-  'AUD/CAD OTC','EUR/GBP OTC','CAD/JPY OTC','CHF/JPY OTC',
-  'EUR/AUD OTC','GBP/AUD OTC','NZD/USD OTC','EUR/CAD OTC'
-];
-
-// Render OTC pairs
-const grid = document.getElementById('otc-pairs-grid');
-otcPairs.forEach((pair, i) => {
-  const btn = document.createElement('button');
-  btn.className = 'otc-pair-btn' + (i === 0 ? ' active' : '');
-  btn.textContent = pair;
-  btn.onclick = () => {
-    document.querySelectorAll('.otc-pair-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedOTCPair = pair;
-  };
-  grid.appendChild(btn);
+document.addEventListener('DOMContentLoaded', () => {
+  loadSubBadge();
 });
-
-
 
 function setTF(btn, tf) {
   document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); selectedTF=tf;
+}
+
+
+function switchPage(page) {
+  document.getElementById('card-trade').style.display = page==='trade' ? 'block' : 'none';
+  document.getElementById('card-stats').style.display = page==='stats' ? 'block' : 'none';
+  document.getElementById('card-sub').style.display = page==='sub' ? 'block' : 'none';
+  ['trade','stats','sub'].forEach(p => {
+    document.getElementById('nav-'+p).classList.toggle('active', p===page);
+  });
+  if (page==='stats') loadStats();
+  if (page==='sub') loadSubInfo();
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch('/api/profile/' + pocket_id);
+    const data = await res.json();
+    if (!data.ok) return;
+    const s = data.stats;
+    document.getElementById('st-wins').textContent = s.wins;
+    document.getElementById('st-losses').textContent = s.losses;
+    document.getElementById('st-total').textContent = s.total;
+    document.getElementById('st-rated').textContent = s.rated;
+    document.getElementById('st-wr-val').textContent = s.winrate + '%';
+    setTimeout(() => { document.getElementById('st-wr-bar').style.width = s.winrate + '%'; }, 100);
+  } catch(e) {}
+}
+
+async function loadSubBadge() {
+  try {
+    const res = await fetch('/api/subscribe/info?pocket_id=' + pocket_id);
+    const data = await res.json();
+    if (!data.ok) return;
+    const badge = document.getElementById('nav-badge');
+    if (data.subscribed && data.sub_expires_at) {
+      const days = Math.max(0, Math.ceil((new Date(data.sub_expires_at) - new Date()) / 86400000));
+      if (days <= 7) { badge.textContent = days+'д'; badge.style.display=''; }
+    }
+  } catch(e) {}
+}
+
+async function loadSubInfo() {
+  try {
+    const res = await fetch('/api/subscribe/info?pocket_id=' + pocket_id);
+    const data = await res.json();
+    if (!data.ok) return;
+    document.getElementById('sub-limit').textContent = data.limit;
+    document.getElementById('sub-used').textContent = data.signals_used;
+    const hero = document.getElementById('sub-hero-box');
+    const bigNum = document.getElementById('sub-big-num');
+    const bigLbl = document.getElementById('sub-big-lbl');
+    const btnWrap = document.getElementById('sub-btn-wrap');
+    if (data.subscribed && data.sub_expires_at) {
+      const days = Math.max(0, Math.ceil((new Date(data.sub_expires_at) - new Date()) / 86400000));
+      hero.className = 'sub-hero ' + (days <= 5 ? 'no-sub' : 'active-sub');
+      bigNum.className = 'sub-big ' + (days <= 5 ? 'red' : 'green');
+      bigNum.textContent = days;
+      bigLbl.textContent = days <= 5 ? 'дней — обновите скоро!' : 'дней осталось';
+      btnWrap.innerHTML = days <= 7 ? '<button class="get-btn" style="font-size:10px;padding:12px;" onclick="goSubscribe()">🔄 Продлить подписку</button>' : '';
+    } else {
+      const rem = Math.max(0, data.limit - data.signals_used);
+      hero.className = 'sub-hero no-sub';
+      bigNum.className = 'sub-big red';
+      bigNum.textContent = rem;
+      bigLbl.textContent = 'бесплатных сигналов осталось';
+      btnWrap.innerHTML = '<button class="get-btn" onclick="goSubscribe()">💎 Оформить подписку</button>';
+    }
+  } catch(e) {}
 }
 
 
@@ -387,48 +535,8 @@ async function getAIExplanation(symbol, direction, prob, timeframe, isUp) {
   }
 }
 
-// ===== OTC ANALYSIS via Claude AI =====
-async function getOTCSignal() {
-  const btn = document.getElementById('otc-btn');
-  const box = document.getElementById('otc-signal-box');
-  btn.disabled = true;
-  box.innerHTML = `<div class="loading-radar"><div class="radar-mini"></div><div class="loading-text">AI анализирует рынок...</div></div>`;
-  document.getElementById('otc-prob-label').textContent = '—';
-  document.getElementById('otc-prob-bar').style.width = '0%';
 
-  try {
-    const res = await fetch(`/signal?timeframe=${selectedTF}&pocket_id=${pocket_id}`);
-    if (res.status === 403) { window.location = 'login.html'; return; }
-    if (res.status === 402) { window.location = 'subscribe.html'; return; }
-    const data = await res.json();
-    const isUp = data.direction.includes('ВВЕРХ');
-    const prob = parseInt(data.probability);
-
-    document.getElementById('flash').classList.add('active');
-    setTimeout(() => document.getElementById('flash').classList.remove('active'), 600);
-
-    if (prob >= 80) { playAlert('strong'); showToast(prob, selectedOTCPair + ' OTC'); }
-    else { playAlert('normal'); }
-
-    // Показываем с припиской OTC
-    box.innerHTML = `
-      <div class="pair-val">${selectedOTCPair}</div>
-      <div class="dir ${isUp ? 'up' : 'down'}">${isUp ? 'ВВЕРХ' : 'ВНИЗ'}</div>
-      <div class="arrow" style="color:${isUp ? '#00ff88' : '#ff0000'}">${isUp ? '▲' : '▼'}</div>
-      <div class="stats-row">
-        <div class="stat"><div class="stat-val">OTC</div><div class="stat-lbl">Режим</div></div>
-        <div class="stat"><div class="stat-val">${prob}%</div><div class="stat-lbl">Точность</div></div>
-      </div>`;
-
-    document.getElementById('otc-prob-label').textContent = prob + '%';
-    setTimeout(() => { document.getElementById('otc-prob-bar').style.width = prob + '%'; }, 100);
-
-  } catch(e) {
-    box.innerHTML = `<div style="color:#ff4444;font-size:12px;">Ошибка получения сигнала</div>`;
-  }
-  btn.disabled = false;
-}
-
+function goSubscribe() { window.location = 'subscribe.html'; }
 function logout(){ window.location='login.html'; }
 </script>
 </body>
