@@ -105,11 +105,11 @@ symbols = [
 # ПОЛУЧЕНИЕ ДАННЫХ
 # ======================
 
-def get_data(symbol):
+def get_data(symbol, interval="1min"):
     try:
         url = (
             f"https://api.twelvedata.com/time_series"
-            f"?symbol={symbol}&interval=1min&outputsize=100&apikey={API_KEY}"
+            f"?symbol={symbol}&interval={interval}&outputsize=100&apikey={API_KEY}"
         )
         r = requests.get(url, timeout=10).json()
 
@@ -353,7 +353,7 @@ def analyze(df):
 # ПОЛУЧЕНИЕ СИГНАЛА
 # ======================
 
-def get_signal():
+def get_signal(timeframe=1):
     """
     Улучшенная логика выбора сигнала:
     1. Анализируем все 22 пары (не 15)
@@ -361,6 +361,11 @@ def get_signal():
     3. Из отфильтрованных берём лучшую
     4. Если ни одна не прошла фильтр — берём лучшую из всех
     """
+    # Маппинг таймфрейма → интервал TwelveData
+    interval_map = {1: "1min", 3: "3min", 5: "5min", 30: "30min"}
+    interval = interval_map.get(int(timeframe), "1min")
+    logging.info(f"📐 Таймфрейм: {timeframe} мин → интервал свечей: {interval}")
+
     best    = {"symbol": None, "direction": "ВВЕРХ", "probability": 60, "score": 0}
     strong  = []  # пары с вероятностью 72%+
 
@@ -370,7 +375,7 @@ def get_signal():
     logging.info(f"🔍 Анализируем все {len(candidates)} пар")
 
     for symbol in candidates:
-        df = get_data(symbol)
+        df = get_data(symbol, interval)
         if df is None or len(df) < 60:
             continue
         try:
@@ -527,7 +532,7 @@ def signal():
             }), 402
 
     timeframe = request.args.get("timeframe", 1)
-    symbol, direction, probability = get_signal()
+    symbol, direction, probability = get_signal(timeframe)
 
     # Сохраняем сигнал и увеличиваем счётчик
     if pocket_id:
