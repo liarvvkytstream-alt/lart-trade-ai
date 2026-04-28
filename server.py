@@ -705,6 +705,81 @@ def rate_signal():
         return jsonify({"ok": False, "error": "Ошибка сервера"}), 500
 
 
+
+# ======================
+# OTC ANALYZE ROUTE
+# ======================
+
+@app.route("/api/analyze-otc", methods=["POST"])
+def analyze_otc():
+    pocket_id = request.form.get("pocket_id", "")
+    if pocket_id:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute("SELECT status FROM users WHERE pocket_id=%s", (pocket_id,))
+        user = cur.fetchone(); cur.close(); conn.close()
+        if not user or user["status"] != "approved":
+            return jsonify({"ok": False, "error": "access_denied"}), 403
+
+    pair = request.form.get("pair", "EUR/USD OTC")
+    file = request.files.get("image")
+
+    if not file:
+        return jsonify({"ok": False, "error": "Файл не загружен"}), 400
+
+    import base64, json, re
+    image_data = base64.b64encode(file.read()).decode("utf-8")
+    media_type = file.content_type or "image/jpeg"
+
+    try:
+        prompt = (
+            f"Ты профессиональный трейдер. Анализируй скриншот графика OTC пары {pair} с PocketOption. "
+            f"Смотри на свечи, тренд, уровни поддержки и сопротивления, паттерны. "
+            f"Определи направление следующего движения и вероятность. "
+            f'Ответь ТОЛЬКО в формате JSON без лишнего текста: {{"direction": "ВВЕРХ" или "ВНИЗ", "probability": число от 55 до 92, "explanation": "2-3 предложения на русском"}}'
+        )
+
+        response = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            json={
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 500,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_data}},
+                        {"type": "text", "text": prompt}
+                    ]
+                }]
+            },
+            timeout=30
+        )
+
+        data = response.json()
+        if "error" in data:
+            logging.error(f"Anthropic error: {data['error']}")
+            return jsonify({"ok": False, "error": "Ошибка AI"}), 500
+
+        text = data["content"][0]["text"].strip()
+        clean = re.sub(r"```json|```", "", text).strip()
+        parsed = json.loads(clean)
+
+        return jsonify({
+            "ok": True,
+            "direction": parsed["direction"],
+            "probability": int(parsed["probability"]),
+            "explanation": parsed["explanation"]
+        })
+
+    except Exception as e:
+        logging.error(f"OTC analyze error: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 # ======================
 # STATIC ROUTES
 # ======================
