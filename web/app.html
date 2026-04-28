@@ -67,18 +67,14 @@
 
   h1 { font-family:'Orbitron',monospace; font-size:13px; font-weight:900; letter-spacing:2px; background:linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:2px; }
 
-  /* MODE SWITCHER */
-  .mode-switch { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:12px 0; }
-  .mode-btn { padding:10px; border-radius:10px; font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; border:1px solid rgba(255,0,0,0.15); background:rgba(255,0,0,0.04); color:rgba(255,255,255,0.4); }
-  .mode-btn.active { background:rgba(255,0,0,0.15); border-color:rgba(255,0,0,0.5); color:white; box-shadow:0 0 12px rgba(255,0,0,0.2); }
+
 
   .divider { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
   .divider-line { flex:1; height:1px; background:linear-gradient(90deg, transparent, rgba(255,0,0,0.35), transparent); }
   .divider-diamond { width:5px; height:5px; background:var(--red); transform:rotate(45deg); box-shadow:0 0 6px var(--red); }
 
   /* STANDARD MODE */
-  .standard-mode, .otc-mode { display:none; }
-  .standard-mode.active, .otc-mode.active { display:block; }
+
 
   .tf-label { font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
   .tf-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:12px; }
@@ -185,16 +181,11 @@
   <div class="logo-wrap"><div class="logo-glow"></div><div class="logo-ring"></div><img src="logo.png" class="logo" alt="LART"></div>
   <h1>LART Trade AI</h1>
 
-  <!-- MODE SWITCHER -->
-  <div class="mode-switch">
-    <button class="mode-btn active" id="btn-standard" onclick="switchMode('standard')">📈 СТАНДАРТ</button>
-    <button class="mode-btn" id="btn-otc" onclick="switchMode('otc')">🔴 OTC</button>
-  </div>
+
 
   <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
 
-  <!-- ===== STANDARD MODE ===== -->
-  <div class="standard-mode active" id="standard-mode">
+
     <p class="tf-label">Выберите таймфрейм</p>
     <div class="tf-grid">
       <button class="tf-btn active" onclick="setTF(this,1)">1 МИН</button>
@@ -222,27 +213,6 @@
     </div>
 
     <button class="get-btn" id="get-btn" onclick="getSignal()">⚡ Получить сигнал</button>
-  </div>
-
-  <!-- ===== OTC MODE ===== -->
-  <div class="otc-mode" id="otc-mode">
-    <p class="otc-pair-label">Выберите OTC пару</p>
-    <div class="otc-pairs-grid" id="otc-pairs-grid">
-      <!-- заполняется JS -->
-    </div>
-
-    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
-
-    <div class="signal-box" id="otc-signal-box">
-      <div style="color:rgba(255,255,255,0.25);font-size:12px;letter-spacing:1px;">Нажмите кнопку для получения OTC сигнала</div>
-    </div>
-
-    <div class="prob-wrap">
-      <div class="prob-header"><span>Вероятность</span><span class="prob-val-label" id="otc-prob-label">—</span></div>
-      <div class="prob-track"><div class="prob-fill" id="otc-prob-bar"></div></div>
-    </div>
-
-    <button class="get-btn" id="otc-btn" onclick="getOTCSignal()">⚡ Получить OTC сигнал</button>
   </div>
 
   <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;"><a href="profile.html" style="font-size:11px;color:rgba(255,255,255,0.35);text-decoration:none;">👤 Мой профиль</a><span style="color:rgba(255,255,255,0.15)">|</span><div class="logout" onclick="logout()" style="margin:0;">Выйти</div></div>
@@ -278,12 +248,7 @@ otcPairs.forEach((pair, i) => {
   grid.appendChild(btn);
 });
 
-function switchMode(mode) {
-  document.getElementById('standard-mode').classList.toggle('active', mode === 'standard');
-  document.getElementById('otc-mode').classList.toggle('active', mode === 'otc');
-  document.getElementById('btn-standard').classList.toggle('active', mode === 'standard');
-  document.getElementById('btn-otc').classList.toggle('active', mode === 'otc');
-}
+
 
 function setTF(btn, tf) {
   document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
