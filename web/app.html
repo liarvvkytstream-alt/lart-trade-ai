@@ -184,6 +184,24 @@
     box-shadow:0 0 8px rgba(255,0,0,0.6);
   }
 
+
+  /* SIGNAL HISTORY ITEMS */
+  .sig-item { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:10px 12px; display:flex; align-items:center; gap:10px; transition:border-color 0.2s; }
+  .sig-item.win  { border-color:rgba(0,255,136,0.2); background:rgba(0,255,136,0.03); }
+  .sig-item.loss { border-color:rgba(255,0,0,0.2); background:rgba(255,0,0,0.03); }
+  .sig-dir { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+  .sig-dir.up   { background:rgba(0,255,136,0.12); border:1px solid rgba(0,255,136,0.3); }
+  .sig-dir.down { background:rgba(255,0,0,0.12); border:1px solid rgba(255,0,0,0.3); }
+  .sig-info { flex:1; min-width:0; }
+  .sig-pair { font-family:'Orbitron',monospace; font-size:10px; font-weight:700; color:white; }
+  .sig-meta { font-size:10px; color:rgba(255,255,255,0.28); margin-top:1px; }
+  .sig-prob { font-family:'Orbitron',monospace; font-size:11px; color:var(--red); flex-shrink:0; }
+  .sig-rate { display:flex; gap:5px; flex-shrink:0; }
+  .rate-win  { width:28px; height:28px; border-radius:8px; background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.25); color:#00ff88; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+  .rate-win:hover  { background:rgba(0,255,136,0.2); transform:scale(1.1); }
+  .rate-loss { width:28px; height:28px; border-radius:8px; background:rgba(255,0,0,0.08); border:1px solid rgba(255,0,0,0.25); color:#ff4444; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+  .rate-loss:hover { background:rgba(255,0,0,0.2); transform:scale(1.1); }
+  .rate-done { font-size:16px; }
   /* STATS PAGE */
   .page-section { display:none; }
   .page-section.active { display:block; }
@@ -267,19 +285,26 @@
 <!-- STATS PAGE -->
 <div class="card page-section" id="card-stats" style="display:none;">
   <div class="page-title">Статистика</div>
-  <div class="page-sub">Торговые результаты</div>
+  <div class="page-sub">История сигналов</div>
   <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
-  <div class="stat-grid2">
-    <div class="stat-box"><div class="stat-box-val green" id="st-wins">—</div><div class="stat-box-lbl">Побед</div></div>
-    <div class="stat-box"><div class="stat-box-val red" id="st-losses">—</div><div class="stat-box-lbl">Потерь</div></div>
-    <div class="stat-box"><div class="stat-box-val gold" id="st-total">—</div><div class="stat-box-lbl">Всего</div></div>
-    <div class="stat-box"><div class="stat-box-val" style="color:rgba(255,255,255,0.5)" id="st-rated">—</div><div class="stat-box-lbl">Оценено</div></div>
-  </div>
-  <div class="wr-wrap">
-    <div class="wr-header"><span>Винрейт</span><span class="wr-val" id="st-wr-val">—</span></div>
+
+  <!-- WINRATE BAR -->
+  <div class="wr-wrap" style="margin-bottom:14px;">
+    <div class="wr-header">
+      <span style="display:flex;gap:12px;">
+        <span style="color:#00ff88;">✓ <span id="st-wins">0</span> побед</span>
+        <span style="color:rgba(255,255,255,0.2);">|</span>
+        <span style="color:var(--red);">✗ <span id="st-losses">0</span> потерь</span>
+      </span>
+      <span class="wr-val" id="st-wr-val">—</span>
+    </div>
     <div class="wr-track"><div class="wr-fill" id="st-wr-bar"></div></div>
   </div>
-  <div style="font-size:10px;color:rgba(255,255,255,0.18);text-align:center;">Оценивайте сигналы в профиле для точной статистики</div>
+
+  <!-- SIGNALS LIST -->
+  <div id="signals-list" style="display:flex;flex-direction:column;gap:7px;max-height:440px;overflow-y:auto;padding-right:2px;">
+    <div style="text-align:center;color:rgba(255,255,255,0.2);font-size:12px;padding:20px;">Загрузка...</div>
+  </div>
 </div>
 
 <!-- SUBSCRIBE PAGE -->
@@ -354,10 +379,53 @@ async function loadStats() {
     const s = data.stats;
     document.getElementById('st-wins').textContent = s.wins;
     document.getElementById('st-losses').textContent = s.losses;
-    document.getElementById('st-total').textContent = s.total;
-    document.getElementById('st-rated').textContent = s.rated;
-    document.getElementById('st-wr-val').textContent = s.winrate + '%';
+    document.getElementById('st-wr-val').textContent = s.rated > 0 ? s.winrate + '%' : '—';
     setTimeout(() => { document.getElementById('st-wr-bar').style.width = s.winrate + '%'; }, 100);
+    renderSignals(data.signals);
+  } catch(e) {
+    document.getElementById('signals-list').innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.2);font-size:12px;padding:20px;">Ошибка загрузки</div>';
+  }
+}
+
+function renderSignals(signals) {
+  const list = document.getElementById('signals-list');
+  if (!signals || signals.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.2);font-size:12px;padding:20px;">Сигналов пока нет</div>';
+    return;
+  }
+  list.innerHTML = signals.map(s => {
+    const isUp = s.direction.includes('ВВЕРХ');
+    const date = s.created_at ? s.created_at.slice(0,16).replace('T',' ') : '';
+    const itemClass = s.result === 'win' ? 'win' : s.result === 'loss' ? 'loss' : '';
+    const rateHtml = s.result
+      ? `<span class="rate-done">${s.result === 'win' ? '✅' : '❌'}</span>`
+      : `<div class="sig-rate">
+           <button class="rate-win" onclick="rateSignal(${s.id}, 'win', this)" title="Победа">✓</button>
+           <button class="rate-loss" onclick="rateSignal(${s.id}, 'loss', this)" title="Потеря">✗</button>
+         </div>`;
+    return `<div class="sig-item ${itemClass}" id="sig-${s.id}">
+      <div class="sig-dir ${isUp ? 'up' : 'down'}">${isUp ? '▲' : '▼'}</div>
+      <div class="sig-info">
+        <div class="sig-pair">${s.pair}</div>
+        <div class="sig-meta">${s.timeframe} мин · ${date.slice(5,16)}</div>
+      </div>
+      <div class="sig-prob">${s.probability}%</div>
+      ${rateHtml}
+    </div>`;
+  }).join('');
+}
+
+async function rateSignal(signalId, result, btn) {
+  try {
+    const res = await fetch('/api/signal/rate', {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({signal_id: signalId, pocket_id, result})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      loadStats(); // reload to update stats + list
+    }
   } catch(e) {}
 }
 
